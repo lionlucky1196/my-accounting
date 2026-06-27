@@ -1288,30 +1288,36 @@ async function saveStaff() {
   if (!name||!email||!pass) { toast('नाव, ईमेल आणि पासवर्ड आवश्यक','error'); return; }
   if (pass.length<6) { toast('पासवर्ड कमीत कमी 6 अक्षरे हवा','error'); return; }
 
-  // Save current admin session
-  const { data: adminSession } = await sb.auth.getSession();
+  // वेगळा Supabase client बनव staff signup साठी — admin session safe राहतो
+  const tempClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
 
-  // Sign up new staff user
-  const { data, error } = await sb.auth.signUp({ email, password: pass });
-  if (error) { toast('त्रुटी: '+error.message,'error'); return; }
+  const { data, error } = await tempClient.auth.signUp({ email, password: pass });
 
-  const newUserId = data.user?.id;
-  if (!newUserId) { toast('यूजर तयार झाला नाही','error'); return; }
-
-  // Insert profile for new staff
-  await sb.from('profiles').insert([{id:newUserId, full_name:name, role, phone}]);
-
-  // Restore admin session
-  if (adminSession?.session) {
-    await sb.auth.setSession({
-      access_token: adminSession.session.access_token,
-      refresh_token: adminSession.session.refresh_token
-    });
+  if (error) {
+    if (error.message.toLowerCase().includes('already')) {
+      toast('हा email आधीच registered आहे','error');
+    } else {
+      toast('त्रुटी: '+error.message,'error');
+    }
+    return;
   }
 
-  await logActivity('स्टाफ जोडला', name);
-  toast('स्टाफ जोडला ✓ — त्याला email confirm करायला सांग','success');
-  closeModal('modal-staff'); loadStaff();
+  const newUserId = data.user?.id;
+  if (!newUserId) { toast('यूजर तयार झाला नाही — email confirm OFF आहे का Supabase मध्ये?','error'); return; }
+
+  // Admin च्या client ने profile insert कर
+  const { error: profErr } = await sb.from('profiles').insert([{
+    id: newUserId, full_name: name, role, phone, is_active: true
+  }]);
+
+  if (profErr) { toast('Profile error: '+profErr.message,'error'); return; }
+
+  await logActivity('स्टाफ जोडला', name + ' (' + role + ')');
+  toast(name + ' जोडला ✓','success');
+  closeModal('modal-staff');
+  loadStaff();
 }
 
 async function deleteStaff(id) {
