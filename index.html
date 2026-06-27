@@ -1541,5 +1541,23 @@ initApp = async function() {
   }
 })();
 </script>
+  <script>
+// Force initialize login tabs
+document.addEventListener('DOMContentLoaded', function() {
+  var tabs = document.querySelectorAll('.login-tab');
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var tabName = this.getAttribute('data-tab');
+      document.querySelectorAll('.login-tab').forEach(function(t) {
+        t.classList.remove('active');
+      });
+      this.classList.add('active');
+      
+      document.getElementById('loginForm').style.display = tabName === 'login' ? 'block' : 'none';
+      document.getElementById('signupForm').style.display = tabName === 'signup' ? 'block' : 'none';
+    });
+  });
+});
+</script>
 </body>
 </html>
