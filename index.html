@@ -686,30 +686,52 @@ async function init() {
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
     currentUser = session.user;
-    await loadProfile();
-    showApp();
+    const ok = await loadProfile();
+    if (ok !== false) showApp();
   } else {
     showAuth();
   }
-  sb.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN') { currentUser = session.user; loadProfile().then(showApp); }
-    if (event === 'SIGNED_OUT') { showAuth(); }
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN') {
+      currentUser = session.user;
+      const ok = await loadProfile();
+      if (ok !== false) showApp();
+    }
+    if (event === 'SIGNED_OUT') {
+      currentUser = null; currentProfile = null;
+      showAuth();
+    }
   });
 }
 
 async function loadProfile() {
   const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
   currentProfile = data;
+  // जर profile नसेल किंवा disabled असेल तर logout
+  if (!data || data.role === 'disabled') {
+    await sb.auth.signOut();
+    document.getElementById('login-err').textContent = 'तुमचा अकाउंट निष्क्रिय केला आहे. Admin ला संपर्क करा.';
+    showAuth();
+    return false;
+  }
+  return true;
 }
 
 function showApp() {
+  // Reset state on every login
+  allCompanies = []; allTx = []; txFilter = ''; reminderTab = 'pending'; adminTab = 'staff';
+
   document.getElementById('app-loader').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('main-app').style.display = 'flex';
   document.getElementById('profile-name').textContent = currentProfile?.full_name || currentUser.email;
   document.getElementById('profile-role').textContent = currentProfile?.role === 'admin' ? '🔑 अॅडमिन' : '👤 स्टाफ';
 
-  // Show admin nav
+  // Remove old admin nav if exists (prevents duplicate on re-login)
+  const oldNav = document.getElementById('nav-admin');
+  if (oldNav) oldNav.remove();
+
+  // Admin nav फक्त admin ला दाखव
   if (currentProfile?.role === 'admin') {
     const adminNav = document.createElement('div');
     adminNav.className = 'nav-item';
@@ -718,6 +740,7 @@ function showApp() {
     adminNav.onclick = () => goPage('admin');
     document.querySelector('.bottom-nav').appendChild(adminNav);
   }
+
   goPage('dashboard');
   setupChat();
 }
@@ -1242,14 +1265,20 @@ async function loadStaff() {
   const { data }=await sb.from('profiles').select('*').neq('id',currentUser.id).order('full_name');
   const el=document.getElementById('staff-list');
   if (!data?.length) { el.innerHTML='<div class="empty"><div class="emoji">👥</div><p>स्टाफ नाही</p></div>'; return; }
-  el.innerHTML=data.map(p=>`<div class="list-item">
-    <div class="list-avatar" style="background:${p.role==='admin'?'linear-gradient(135deg,var(--accent),#9c35e0)':'linear-gradient(135deg,var(--accent2),#2e7d5e)'}">👤</div>
-    <div class="list-info">
-      <div class="list-name">${p.full_name} <span class="badge badge-${p.role}">${p.role==='admin'?'अॅडमिन':'स्टाफ'}</span></div>
-      <div class="list-sub">📞 ${p.phone||'-'}</div>
-    </div>
-    <button class="btn btn-danger btn-sm" onclick="deleteStaff('${p.id}')">🗑️</button>
-  </div>`).join('');
+  el.innerHTML=data.map(p=>{
+    const isDisabled = p.role==='disabled' || p.is_active===false;
+    const roleLabel = p.role==='admin'?'अॅडमिन': isDisabled?'निष्क्रिय':'स्टाफ';
+    const badgeClass = p.role==='admin'?'badge-admin': isDisabled?'badge-expense':'badge-staff';
+    const avatarBg = p.role==='admin'?'linear-gradient(135deg,var(--accent),#9c35e0)': isDisabled?'linear-gradient(135deg,#555,#333)':'linear-gradient(135deg,var(--accent2),#2e7d5e)';
+    return `<div class="list-item" style="${isDisabled?'opacity:.6':''}">
+      <div class="list-avatar" style="background:${avatarBg}">👤</div>
+      <div class="list-info">
+        <div class="list-name">${p.full_name} <span class="badge ${badgeClass}">${roleLabel}</span></div>
+        <div class="list-sub">📞 ${p.phone||'-'}</div>
+      </div>
+      ${!isDisabled?`<button class="btn btn-danger btn-sm" onclick="deleteStaff('${p.id}')">🚫 निष्क्रिय</button>`:'<span style="font-size:.75rem;color:var(--danger)">निष्क्रिय</span>'}
+    </div>`;
+  }).join('');
 }
 
 function openAddStaff() { ['staff-name','staff-email','staff-pass','staff-phone'].forEach(id=>document.getElementById(id).value=''); document.getElementById('staff-role').value='staff'; openModal('modal-staff'); }
@@ -1286,10 +1315,13 @@ async function saveStaff() {
 }
 
 async function deleteStaff(id) {
-  if (!confirm('स्टाफ हटवायचा?')) return;
-  await sb.from('profiles').delete().eq('id',id);
-  await logActivity('स्टाफ हटवला', id);
-  toast('स्टाफ हटवला ✓','success'); loadStaff();
+  if (!confirm('स्टाफ हटवायचा? तो यापुढे login करू शकणार नाही.')) return;
+  // profile मधून is_active false करणार (browser मधून auth delete होत नाही)
+  const { error } = await sb.from('profiles').update({ is_active: false, role: 'disabled' }).eq('id', id);
+  if (error) { toast('त्रुटी: ' + error.message, 'error'); return; }
+  await logActivity('स्टाफ निष्क्रिय केला', id);
+  toast('स्टाफ निष्क्रिय केला ✓', 'success');
+  loadStaff();
 }
 
 // =============================================
