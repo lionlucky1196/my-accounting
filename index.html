@@ -1,1219 +1,1408 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="mr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<meta name="theme-color" content="#6366f1" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="mobile-web-app-capable" content="yes" />
-<title>Accounting App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Hisaab Pro - मोबाइल अकाउंटिंग</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root {
-    --primary: #6366f1;
-    --primary-dark: #4f46e5;
-    --primary-light: #818cf8;
-    --success: #10b981;
-    --danger: #ef4444;
-    --warning: #f59e0b;
-    --info: #3b82f6;
-    --bg: #f3f4f6;
-    --surface: #ffffff;
-    --surface-2: #f9fafb;
-    --text: #111827;
-    --text-muted: #6b7280;
-    --border: #e5e7eb;
-    --shadow: 0 2px 8px rgba(0,0,0,0.06);
-    --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
-    --radius: 16px;
-    --radius-sm: 10px;
-    --nav-h: 64px;
-    --header-h: 60px;
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  [data-theme="dark"] {
-    --bg: #0f172a;
-    --surface: #1e293b;
-    --surface-2: #273449;
-    --text: #f1f5f9;
-    --text-muted: #94a3b8;
-    --border: #334155;
-    --shadow: 0 2px 8px rgba(0,0,0,0.3);
-    --shadow-lg: 0 10px 30px rgba(0,0,0,0.5);
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body {
-    margin: 0; padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg); color: var(--text);
-    overscroll-behavior: none;
-    height: 100%;
-  }
-  body { font-size: 15px; line-height: 1.5; }
-  button, input, select, textarea {
-    font-family: inherit; font-size: inherit; color: inherit;
-  }
-  input, select, textarea {
-    width: 100%; padding: 12px 14px;
-    background: var(--surface-2); color: var(--text);
-    border: 1px solid var(--border); border-radius: var(--radius-sm);
-    outline: none; transition: border-color .2s;
-  }
-  input:focus, select:focus, textarea:focus { border-color: var(--primary); }
-  textarea { resize: vertical; min-height: 70px; }
-  label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
-  .field { margin-bottom: 14px; }
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--bg2:#181c26;--bg3:#1e2332;--card:#222840;
+  --accent:#6c63ff;--accent2:#4caf82;--danger:#e05555;--warn:#f0a500;
+  --text:#eef0f8;--text2:#9ba3c4;--border:#2e3555;
+  --income:#4caf82;--expense:#e05555;--advance:#f0a500;--receive:#6c63ff;--payment:#e07b55;
+  --radius:14px;--shadow:0 4px 24px rgba(0,0,0,.4);
+  --font:'Segoe UI',system-ui,sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+button{cursor:pointer;border:none;outline:none;font-family:inherit}
+input,select,textarea{font-family:inherit;outline:none;border:none}
+a{text-decoration:none;color:inherit}
 
-  #loginScreen {
-    position: fixed; inset: 0;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 24px; z-index: 100;
-  }
-  .login-card {
-    background: var(--surface); color: var(--text);
-    width: 100%; max-width: 400px;
-    padding: 28px 22px; border-radius: 24px;
-    box-shadow: var(--shadow-lg);
-    animation: slideUp .4s ease;
-  }
-  .login-logo {
-    width: 72px; height: 72px; border-radius: 20px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 32px; font-weight: 700;
-    margin: 0 auto 16px;
-    box-shadow: 0 8px 24px rgba(99,102,241,.4);
-  }
-  .login-title { text-align: center; font-size: 22px; font-weight: 700; margin: 0 0 4px; }
-  .login-sub { text-align: center; color: var(--text-muted); margin: 0 0 22px; font-size: 13px; }
-  .login-tabs { display: flex; background: var(--surface-2); border-radius: 12px; padding: 4px; margin-bottom: 18px; }
-  .login-tab {
-    flex: 1; padding: 10px; text-align: center; border-radius: 8px;
-    cursor: pointer; font-weight: 600; font-size: 14px; color: var(--text-muted);
-    transition: all .2s;
-  }
-  .login-tab.active { background: var(--primary); color: #fff; box-shadow: var(--shadow); }
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-  #app { display: none; min-height: 100vh; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 8px); }
-  .header {
-    position: sticky; top: 0; z-index: 50;
-    background: var(--surface);
-    padding: 12px 16px;
-    display: flex; align-items: center; gap: 12px;
-    border-bottom: 1px solid var(--border);
-    height: var(--header-h);
-  }
-  .header h1 { font-size: 18px; margin: 0; flex: 1; font-weight: 700; }
-  .icon-btn {
-    width: 40px; height: 40px; border-radius: 12px;
-    background: var(--surface-2); border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--text); font-size: 18px;
-    transition: transform .15s;
-  }
-  .icon-btn:active { transform: scale(.92); }
+/* ===== LOADER ===== */
+#app-loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px}
+.loader-logo{font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.loader-spin{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-  .view { display: none; padding: 16px; animation: fadeIn .25s ease; }
-  .view.active { display: block; }
+/* ===== AUTH ===== */
+#auth-screen{display:none;position:fixed;inset:0;background:var(--bg);overflow-y:auto;padding:20px}
+.auth-inner{max-width:400px;margin:0 auto;padding:40px 0}
+.auth-logo{text-align:center;margin-bottom:32px}
+.auth-logo h1{font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.auth-logo p{color:var(--text2);font-size:.9rem;margin-top:4px}
+.auth-card{background:var(--card);border-radius:var(--radius);padding:24px;border:1px solid var(--border)}
+.auth-card h2{font-size:1.2rem;margin-bottom:20px;color:var(--text)}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:.8rem;color:var(--text2);margin-bottom:6px;font-weight:500}
+.form-group input,.form-group select,.form-group textarea{
+  width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;color:var(--text);font-size:.95rem;transition:.2s
+}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+.form-group select option{background:var(--bg2)}
+.form-group textarea{resize:vertical;min-height:80px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border-radius:10px;font-size:.95rem;font-weight:600;transition:.2s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{filter:brightness(1.1)}
+.btn-success{background:var(--accent2);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-warn{background:var(--warn);color:#000}
+.btn-ghost{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+.btn-full{width:100%}
+.btn-sm{padding:8px 14px;font-size:.82rem}
+.btn:active{transform:scale(.97)}
 
-  .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    display: flex; justify-content: space-around;
-    padding: 8px 4px calc(8px + var(--safe-bottom));
-    z-index: 40;
-    box-shadow: 0 -4px 16px rgba(0,0,0,.04);
-  }
-  .nav-item {
-    flex: 1; display: flex; flex-direction: column; align-items: center;
-    padding: 6px 4px; cursor: pointer; color: var(--text-muted);
-    font-size: 11px; font-weight: 600;
-    transition: color .2s; border: none; background: none;
-  }
-  .nav-item .nav-icon { font-size: 22px; margin-bottom: 2px; }
-  .nav-item.active { color: var(--primary); }
+/* ===== MAIN APP ===== */
+#main-app{display:none;flex-direction:column;min-height:100vh;padding-bottom:70px}
 
-  .card {
-    background: var(--surface); border-radius: var(--radius);
-    padding: 16px; box-shadow: var(--shadow);
-    margin-bottom: 12px;
-  }
-  .card-title { font-size: 13px; color: var(--text-muted); margin: 0 0 4px; font-weight: 500; }
-  .card-value { font-size: 22px; font-weight: 700; margin: 0; }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-  .stat-income .card-value { color: var(--success); }
-  .stat-expense .card-value { color: var(--danger); }
-  .stat-cash .card-value { color: var(--primary); }
+/* ===== TOP NAV ===== */
+.topbar{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.topbar-title{font-size:1.1rem;font-weight:700;color:var(--text)}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text);font-size:1.1rem}
 
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 12px 18px; border-radius: 12px; border: none;
-    background: var(--primary); color: #fff; font-weight: 600;
-    cursor: pointer; font-size: 14px;
-    transition: transform .15s, opacity .2s;
-    width: 100%;
-  }
-  .btn:active { transform: scale(.97); }
-  .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
-  .btn-danger { background: var(--danger); }
-  .btn-success { background: var(--success); }
-  .btn-sm { padding: 8px 12px; font-size: 13px; width: auto; }
-  .fab {
-    position: fixed; right: 16px; bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px);
-    width: 56px; height: 56px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    color: #fff; border: none; font-size: 26px;
-    box-shadow: 0 8px 24px rgba(99,102,241,.4);
-    cursor: pointer; z-index: 30;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .fab:active { transform: scale(.92); }
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;height:60px;padding:0 4px}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 2px;color:var(--text2);font-size:.62rem;border-radius:10px;transition:.2s;position:relative;cursor:pointer}
+.nav-item.active{color:var(--accent)}
+.nav-item .nav-icon{font-size:1.3rem;transition:.2s}
+.nav-item.active .nav-icon{transform:scale(1.15)}
+.nav-badge{position:absolute;top:4px;right:18%;width:8px;height:8px;background:var(--danger);border-radius:50%}
 
-  .list-item {
-    background: var(--surface); border-radius: var(--radius);
-    padding: 14px; margin-bottom: 10px;
-    display: flex; align-items: center; gap: 12px;
-    box-shadow: var(--shadow); cursor: pointer;
-    transition: transform .15s;
-  }
-  .list-item:active { transform: scale(.98); }
-  .list-avatar {
-    width: 44px; height: 44px; border-radius: 12px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    color: #fff; display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 16px; flex-shrink: 0;
-  }
-  .list-body { flex: 1; min-width: 0; }
-  .list-title { font-weight: 600; margin: 0 0 2px; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .list-sub { color: var(--text-muted); font-size: 12px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .list-amount { font-weight: 700; font-size: 15px; }
-  .list-amount.income { color: var(--success); }
-  .list-amount.expense, .list-amount.payment, .list-amount.advance { color: var(--danger); }
-  .list-amount.receive { color: var(--info); }
+/* ===== PAGES ===== */
+.page{display:none;padding:16px;animation:fadeIn .25s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-  .modal-backdrop {
-    position: fixed; inset: 0; background: rgba(0,0,0,.5);
-    z-index: 200; display: none; align-items: flex-end; justify-content: center;
-    animation: fadeIn .2s;
-  }
-  .modal-backdrop.active { display: flex; }
-  .modal-sheet {
-    background: var(--surface); width: 100%; max-width: 500px;
-    border-radius: 24px 24px 0 0;
-    padding: 20px; max-height: 92vh; overflow-y: auto;
-    animation: slideUp .3s ease;
-  }
-  .modal-handle {
-    width: 40px; height: 4px; background: var(--border);
-    border-radius: 2px; margin: 0 auto 14px;
-  }
-  .modal-title { font-size: 18px; font-weight: 700; margin: 0 0 16px; }
-  .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
-  .modal-actions .btn { flex: 1; }
+/* ===== CARDS ===== */
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:16px;margin-bottom:12px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-title{font-size:.85rem;color:var(--text2);font-weight:500}
+.card-value{font-size:1.6rem;font-weight:800}
 
-  #toast {
-    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-    background: var(--text); color: var(--bg);
-    padding: 10px 18px; border-radius: 24px;
-    font-size: 14px; font-weight: 500;
-    z-index: 500; opacity: 0; pointer-events: none;
-    transition: opacity .25s, transform .25s;
-    box-shadow: var(--shadow-lg);
-  }
-  #toast.show { opacity: 1; transform: translateX(-50%) translateY(6px); }
-  #toast.success { background: var(--success); color: #fff; }
-  #toast.error { background: var(--danger); color: #fff; }
+/* ===== DASHBOARD ===== */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:14px}
+.stat-icon{font-size:1.4rem;margin-bottom:6px}
+.stat-label{font-size:.75rem;color:var(--text2)}
+.stat-val{font-size:1.3rem;font-weight:800;margin-top:2px}
+.stat-income{border-top:3px solid var(--income)}
+.stat-expense{border-top:3px solid var(--expense)}
+.stat-balance{border-top:3px solid var(--accent);grid-column:1/-1}
 
-  .chat-container { display: flex; flex-direction: column; height: calc(100vh - var(--header-h) - var(--nav-h) - var(--safe-bottom) - 16px); }
-  .chat-messages { flex: 1; overflow-y: auto; padding: 8px 4px; }
-  .chat-msg { margin-bottom: 10px; display: flex; flex-direction: column; max-width: 80%; }
-  .chat-msg.me { align-self: flex-end; align-items: flex-end; }
-  .chat-msg.other { align-self: flex-start; }
-  .chat-bubble {
-    padding: 10px 14px; border-radius: 18px;
-    font-size: 14px; word-wrap: break-word;
-    box-shadow: var(--shadow);
-  }
-  .chat-msg.me .chat-bubble { background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
-  .chat-msg.other .chat-bubble { background: var(--surface); border-bottom-left-radius: 4px; }
-  .chat-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; padding: 0 6px; }
-  .chat-input-wrap {
-    display: flex; gap: 8px; padding: 10px;
-    background: var(--surface); border-top: 1px solid var(--border);
-    border-radius: var(--radius); margin-top: 8px;
-  }
-  .chat-input-wrap input { flex: 1; }
-  .chat-send {
-    width: 46px; height: 46px; border-radius: 50%;
-    background: var(--primary); color: #fff; border: none;
-    font-size: 18px; cursor: pointer; flex-shrink: 0;
-  }
+/* ===== SECTION HEADER ===== */
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin:16px 0 10px}
+.section-hdr h3{font-size:.95rem;font-weight:700}
 
-  .search-bar { position: relative; margin-bottom: 14px; }
-  .search-bar input { padding-left: 40px; }
-  .search-bar::before {
-    content: "🔍"; position: absolute; left: 12px; top: 50%;
-    transform: translateY(-50%); font-size: 16px; opacity: .6;
-  }
+/* ===== TRANSACTION ITEM ===== */
+.tx-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--card);border-radius:12px;border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:.15s}
+.tx-item:active{background:var(--bg3)}
+.tx-dot{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.tx-income{background:rgba(76,175,130,.15);color:var(--income)}
+.tx-expense{background:rgba(224,85,85,.15);color:var(--expense)}
+.tx-advance{background:rgba(240,165,0,.15);color:var(--advance)}
+.tx-receive{background:rgba(108,99,255,.15);color:var(--receive)}
+.tx-payment{background:rgba(224,123,85,.15);color:var(--payment)}
+.tx-info{flex:1;min-width:0}
+.tx-name{font-size:.9rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-sub{font-size:.75rem;color:var(--text2);margin-top:2px}
+.tx-amount{font-size:1rem;font-weight:700;flex-shrink:0}
 
-  .badge {
-    display: inline-block; padding: 3px 8px; border-radius: 10px;
-    font-size: 11px; font-weight: 600;
-  }
-  .badge-success { background: rgba(16,185,129,.15); color: var(--success); }
-  .badge-danger { background: rgba(239,68,68,.15); color: var(--danger); }
-  .badge-warning { background: rgba(245,158,11,.15); color: var(--warning); }
-  .badge-info { background: rgba(59,130,246,.15); color: var(--info); }
+/* ===== LIST ITEM ===== */
+.list-item{display:flex;align-items:center;gap:12px;padding:14px;background:var(--card);border-radius:12px;border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:.15s}
+.list-item:active{background:var(--bg3)}
+.list-avatar{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.list-info{flex:1;min-width:0}
+.list-name{font-size:.92rem;font-weight:600}
+.list-sub{font-size:.75rem;color:var(--text2);margin-top:2px}
+.list-action{flex-shrink:0;display:flex;gap:6px}
 
-  .empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
-  .empty-icon { font-size: 48px; margin-bottom: 10px; opacity: .5; }
-  .section-title {
-    font-size: 14px; font-weight: 700; color: var(--text-muted);
-    margin: 16px 0 10px; text-transform: uppercase; letter-spacing: .5px;
-  }
-  .breadcrumb {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 13px; color: var(--text-muted); margin-bottom: 10px;
-    flex-wrap: wrap;
-  }
-  .breadcrumb a { color: var(--primary); text-decoration: none; font-weight: 600; }
+/* ===== MODAL ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex;animation:fadeIn .2s ease}
+.modal{background:var(--bg2);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;padding:20px 16px 32px;border-top:1px solid var(--border)}
+.modal-drag{width:40px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 16px}
+.modal-title{font-size:1.1rem;font-weight:700;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.modal-actions .btn{flex:1}
 
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  ::-webkit-scrollbar { width: 0; height: 0; }
-  .loading { text-align: center; padding: 20px; color: var(--text-muted); }
-  .spinner {
-    display: inline-block; width: 24px; height: 24px;
-    border: 3px solid var(--border); border-top-color: var(--primary);
-    border-radius: 50%; animation: spin 1s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* ===== BADGE ===== */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:.72rem;font-weight:600}
+.badge-income{background:rgba(76,175,130,.2);color:var(--income)}
+.badge-expense{background:rgba(224,85,85,.2);color:var(--expense)}
+.badge-advance{background:rgba(240,165,0,.2);color:var(--advance)}
+.badge-receive{background:rgba(108,99,255,.2);color:var(--receive)}
+.badge-payment{background:rgba(224,123,85,.2);color:var(--payment)}
+.badge-pending{background:rgba(240,165,0,.2);color:var(--warn)}
+.badge-completed{background:rgba(76,175,130,.2);color:var(--income)}
+.badge-admin{background:rgba(108,99,255,.2);color:var(--accent)}
+.badge-staff{background:rgba(155,163,196,.15);color:var(--text2)}
+
+/* ===== SEARCH ===== */
+.search-bar{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:14px}
+.search-bar input{flex:1;background:transparent;color:var(--text);font-size:.92rem}
+.search-bar input::placeholder{color:var(--text2)}
+
+/* ===== CHAT ===== */
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 140px)}
+.chat-messages{flex:1;overflow-y:auto;padding:8px 0;display:flex;flex-direction:column;gap:8px}
+.chat-bubble-wrap{display:flex;flex-direction:column;max-width:80%}
+.chat-bubble-wrap.me{align-self:flex-end;align-items:flex-end}
+.chat-bubble-wrap.them{align-self:flex-start;align-items:flex-start}
+.chat-sender{font-size:.72rem;color:var(--text2);margin-bottom:3px;padding:0 6px}
+.chat-bubble{padding:10px 14px;border-radius:14px;font-size:.9rem;line-height:1.4;word-break:break-word}
+.chat-bubble-wrap.me .chat-bubble{background:var(--accent);color:#fff;border-radius:14px 14px 4px 14px}
+.chat-bubble-wrap.them .chat-bubble{background:var(--card);border:1px solid var(--border);border-radius:14px 14px 14px 4px}
+.chat-time{font-size:.68rem;color:var(--text2);padding:0 6px;margin-top:3px}
+.chat-input-bar{display:flex;gap:10px;padding-top:12px;border-top:1px solid var(--border);margin-top:8px}
+.chat-input-bar input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:24px;padding:11px 16px;color:var(--text);font-size:.9rem}
+.chat-send{width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+
+/* ===== EMPTY STATE ===== */
+.empty{text-align:center;padding:40px 20px;color:var(--text2)}
+.empty .emoji{font-size:2.5rem;margin-bottom:10px}
+.empty p{font-size:.9rem}
+
+/* ===== SETTINGS ===== */
+.settings-section{margin-bottom:20px}
+.settings-section h3{font-size:.8rem;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.settings-item{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--card);border-radius:12px;border:1px solid var(--border);margin-bottom:8px;cursor:pointer}
+.settings-item-left{display:flex;align-items:center;gap:12px}
+.settings-item-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem}
+.settings-label{font-size:.92rem;font-weight:500}
+.settings-sub{font-size:.75rem;color:var(--text2);margin-top:2px}
+.toggle{width:46px;height:26px;background:var(--border);border-radius:13px;position:relative;transition:.3s;flex-shrink:0}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:3px;left:3px;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.toggle.on::after{left:23px}
+
+/* ===== DARK/LIGHT ===== */
+body.light{
+  --bg:#f0f2f7;--bg2:#fff;--bg3:#e8ebf5;--card:#fff;
+  --text:#1a1d2e;--text2:#6b7394;--border:#dde0ed;--shadow:0 2px 12px rgba(0,0,0,.1)
+}
+
+/* ===== ACTIVITY LOG ===== */
+.log-item{display:flex;gap:12px;padding:12px;background:var(--card);border-radius:12px;border:1px solid var(--border);margin-bottom:8px}
+.log-dot{width:36px;height:36px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.log-info{flex:1}
+.log-action{font-size:.88rem;font-weight:600}
+.log-user{font-size:.75rem;color:var(--text2);margin-top:2px}
+.log-time{font-size:.72rem;color:var(--text2);margin-top:4px}
+
+/* ===== LEDGER DETAIL ===== */
+.ledger-balance-card{background:linear-gradient(135deg,var(--accent),#9c35e0);border-radius:var(--radius);padding:20px;margin-bottom:16px;text-align:center}
+.ledger-balance-card .label{font-size:.8rem;opacity:.8}
+.ledger-balance-card .val{font-size:2rem;font-weight:800;margin-top:4px}
+
+/* ===== FAB ===== */
+.fab{position:fixed;bottom:76px;right:16px;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#9c35e0);color:#fff;font-size:1.5rem;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(108,99,255,.5);z-index:90;transition:.2s}
+.fab:active{transform:scale(.92)}
+
+/* ===== TABS ===== */
+.tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px}
+.tabs::-webkit-scrollbar{height:0}
+.tab{padding:8px 16px;border-radius:20px;font-size:.82rem;font-weight:600;background:var(--bg3);color:var(--text2);white-space:nowrap;cursor:pointer;transition:.2s;border:1px solid var(--border)}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ===== REMINDER ===== */
+.reminder-item{display:flex;align-items:center;gap:12px;padding:14px;background:var(--card);border-radius:12px;border:1px solid var(--border);margin-bottom:8px}
+.reminder-check{width:24px;height:24px;border-radius:8px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:.2s}
+.reminder-check.done{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.reminder-info{flex:1}
+.reminder-title{font-size:.9rem;font-weight:600}
+.reminder-sub{font-size:.75rem;color:var(--text2);margin-top:2px}
+
+/* ===== DETAIL MODAL ===== */
+.detail-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.detail-row:last-child{border-bottom:none}
+.detail-label{font-size:.8rem;color:var(--text2)}
+.detail-val{font-size:.88rem;font-weight:600;text-align:right}
+
+/* ===== TOAST ===== */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:10px 20px;font-size:.88rem;z-index:9999;opacity:0;transition:.3s;white-space:nowrap;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.success{border-color:var(--accent2);color:var(--accent2)}
+#toast.error{border-color:var(--danger);color:var(--danger)}
+
+/* ===== UTILS ===== */
+.text-income{color:var(--income)}
+.text-expense{color:var(--expense)}
+.text-advance{color:var(--advance)}
+.text-receive{color:var(--receive)}
+.text-payment{color:var(--payment)}
+.text-center{text-align:center}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}
+.mb8{margin-bottom:8px}.fw700{font-weight:700}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:600;background:var(--bg3);border:1px solid var(--border);cursor:pointer;color:var(--text2)}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 </style>
 </head>
 <body>
 
-<div id="loginScreen">
-  <div class="login-card">
-    <div class="login-logo">₹</div>
-    <h2 class="login-title">Accounting App</h2>
-    <p class="login-sub">Manage your business on the go</p>
-    <div class="login-tabs">
-      <div class="login-tab active" data-tab="login">Login</div>
-      <div class="login-tab" data-tab="signup">Sign Up</div>
+<!-- LOADER -->
+<div id="app-loader">
+  <div class="loader-logo">Hisaab Pro</div>
+  <div class="loader-spin"></div>
+  <p style="color:var(--text2);font-size:.85rem">लोड होत आहे...</p>
+</div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-inner">
+    <div class="auth-logo">
+      <h1>📊 Hisaab Pro</h1>
+      <p>मोबाइल अकाउंटिंग सॉफ्टवेअर</p>
     </div>
-    <div id="loginForm">
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="loginEmail" placeholder="you@example.com" />
+    <div class="auth-card">
+      <h2>लॉगिन करा</h2>
+      <div class="form-group">
+        <label>ईमेल</label>
+        <input type="email" id="login-email" placeholder="तुमचा ईमेल" />
       </div>
-      <div class="field">
-        <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="••••••••" />
+      <div class="form-group">
+        <label>पासवर्ड</label>
+        <input type="password" id="login-pass" placeholder="पासवर्ड" />
       </div>
-      <button class="btn" onclick="doLogin()">Login</button>
-    </div>
-    <div id="signupForm" style="display:none;">
-      <div class="field">
-        <label>Full Name</label>
-        <input type="text" id="signupName" placeholder="Your name" />
-      </div>
-      <div class="field">
-        <label>Phone</label>
-        <input type="tel" id="signupPhone" placeholder="Phone number" />
-      </div>
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="signupEmail" placeholder="you@example.com" />
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input type="password" id="signupPassword" placeholder="Min 6 characters" />
-      </div>
-      <button class="btn" onclick="doSignup()">Create Account</button>
+      <button class="btn btn-primary btn-full" onclick="doLogin()">लॉगिन</button>
+      <p id="login-err" style="color:var(--danger);font-size:.82rem;margin-top:10px;text-align:center"></p>
     </div>
   </div>
 </div>
 
-<div id="app">
-  <div class="header">
-    <button class="icon-btn" id="backBtn" onclick="goBack()" style="display:none;">←</button>
-    <h1 id="pageTitle">Dashboard</h1>
-    <button class="icon-btn" onclick="openView('search')">🔍</button>
+<!-- MAIN APP -->
+<div id="main-app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title" id="page-title">डॅशबोर्ड</div>
+    </div>
+    <div class="topbar-right">
+      <div class="icon-btn" onclick="openSearch()">🔍</div>
+      <div class="icon-btn" id="user-avatar" onclick="goPage('settings')">👤</div>
+    </div>
   </div>
 
-  <div class="view active" id="view-dashboard">
-    <div class="grid-2">
-      <div class="card stat-income">
-        <p class="card-title">Today's Income</p>
-        <p class="card-value" id="statIncome">₹0</p>
+  <!-- PAGES CONTAINER -->
+  <div id="pages">
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card stat-income">
+          <div class="stat-icon">💚</div>
+          <div class="stat-label">आजचे उत्पन्न</div>
+          <div class="stat-val text-income" id="dash-income">₹0</div>
+        </div>
+        <div class="stat-card stat-expense">
+          <div class="stat-icon">❤️</div>
+          <div class="stat-label">आजचा खर्च</div>
+          <div class="stat-val text-expense" id="dash-expense">₹0</div>
+        </div>
+        <div class="stat-card stat-balance">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div class="stat-label">एकूण कॅश बॅलन्स</div>
+              <div class="stat-val" id="dash-balance">₹0</div>
+            </div>
+            <div style="font-size:2rem">💰</div>
+          </div>
+        </div>
       </div>
-      <div class="card stat-expense">
-        <p class="card-title">Today's Expense</p>
-        <p class="card-value" id="statExpense">₹0</p>
+
+      <div class="section-hdr">
+        <h3>📋 अलीकडील व्यवहार</h3>
+        <button class="btn btn-ghost btn-sm" onclick="goPage('transactions')">सर्व पहा</button>
+      </div>
+      <div id="dash-recent-tx"><div class="empty"><div class="emoji">📭</div><p>कोणताही व्यवहार नाही</p></div></div>
+
+      <div class="section-hdr">
+        <h3>🔔 येणारे रिमाइंडर</h3>
+        <button class="btn btn-ghost btn-sm" onclick="goPage('reminders')">सर्व पहा</button>
+      </div>
+      <div id="dash-reminders"><div class="empty"><div class="emoji">🔔</div><p>कोणताही रिमाइंडर नाही</p></div></div>
+
+      <div class="section-hdr"><h3>📌 अलीकडील क्रिया</h3></div>
+      <div id="dash-activity"><div class="empty"><div class="emoji">📋</div><p>कोणतीही क्रिया नाही</p></div></div>
+    </div>
+
+    <!-- COMPANIES PAGE -->
+    <div class="page" id="page-companies">
+      <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" placeholder="कंपनी शोधा..." id="company-search" oninput="filterCompanies()"/>
+      </div>
+      <div id="companies-list"></div>
+      <div class="fab" onclick="openAddCompany()">+</div>
+    </div>
+
+    <!-- SITES PAGE -->
+    <div class="page" id="page-sites">
+      <div class="form-group" style="margin-bottom:12px">
+        <select id="site-company-filter" onchange="loadSites()">
+          <option value="">-- कंपनी निवडा --</option>
+        </select>
+      </div>
+      <div id="sites-list"><div class="empty"><div class="emoji">🏗️</div><p>वरून कंपनी निवडा</p></div></div>
+      <div class="fab" onclick="openAddSite()">+</div>
+    </div>
+
+    <!-- LEDGERS PAGE -->
+    <div class="page" id="page-ledgers">
+      <div class="form-group" style="margin-bottom:12px">
+        <select id="ledger-company-filter" onchange="loadLedgers()">
+          <option value="">-- कंपनी निवडा --</option>
+        </select>
+      </div>
+      <div id="ledgers-list"><div class="empty"><div class="emoji">📒</div><p>वरून कंपनी निवडा</p></div></div>
+      <div class="fab" onclick="openAddLedger()">+</div>
+    </div>
+
+    <!-- TRANSACTIONS PAGE -->
+    <div class="page" id="page-transactions">
+      <div class="chip-row" id="tx-type-chips">
+        <div class="chip active" data-type="" onclick="setTxFilter(this,'')">सर्व</div>
+        <div class="chip" data-type="income" onclick="setTxFilter(this,'income')">उत्पन्न</div>
+        <div class="chip" data-type="expense" onclick="setTxFilter(this,'expense')">खर्च</div>
+        <div class="chip" data-type="advance" onclick="setTxFilter(this,'advance')">आगाऊ</div>
+        <div class="chip" data-type="receive" onclick="setTxFilter(this,'receive')">प्राप्त</div>
+        <div class="chip" data-type="payment" onclick="setTxFilter(this,'payment')">देणे</div>
+      </div>
+      <div id="tx-list"><div class="empty"><div class="emoji">💸</div><p>व्यवहार नाहीत</p></div></div>
+      <div class="fab" onclick="openAddTx()">+</div>
+    </div>
+
+    <!-- REMINDERS PAGE -->
+    <div class="page" id="page-reminders">
+      <div class="tabs">
+        <div class="tab active" onclick="setReminderTab(this,'pending')">⏳ बाकी</div>
+        <div class="tab" onclick="setReminderTab(this,'completed')">✅ पूर्ण</div>
+      </div>
+      <div id="reminders-list"></div>
+      <div class="fab" onclick="openAddReminder()">+</div>
+    </div>
+
+    <!-- CHAT PAGE -->
+    <div class="page" id="page-chat">
+      <div class="chat-wrap">
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input-bar">
+          <input type="text" id="chat-input" placeholder="संदेश लिहा..." onkeydown="if(event.key==='Enter')sendChat()" />
+          <button class="chat-send" onclick="sendChat()">➤</button>
+        </div>
       </div>
     </div>
-    <div class="card stat-cash">
-      <p class="card-title">Cash Balance</p>
-      <p class="card-value" id="statCash">₹0</p>
-    </div>
-    <div class="section-title">Recent Transactions</div>
-    <div id="recentTx"></div>
-    <div class="section-title">Upcoming Reminders</div>
-    <div id="recentReminders"></div>
-    <div class="section-title">Recent Activities</div>
-    <div id="recentActivities"></div>
-  </div>
 
-  <div class="view" id="view-companies">
-    <div class="search-bar"><input type="text" id="searchCompanies" placeholder="Search companies..." oninput="renderCompanies()" /></div>
-    <div id="companiesList"></div>
-  </div>
-
-  <div class="view" id="view-companyDetail">
-    <div class="breadcrumb"><a onclick="openView('companies')">Companies</a> <span>›</span> <span id="cdName"></span></div>
-    <div class="card" id="cdInfo"></div>
-    <div class="section-title">Sites / Works</div>
-    <div id="sitesList"></div>
-    <div class="section-title">Personal Ledgers</div>
-    <div id="ledgersList"></div>
-  </div>
-
-  <div class="view" id="view-ledgerDetail">
-    <div class="breadcrumb" id="ldBreadcrumb"></div>
-    <div class="card" id="ldInfo"></div>
-    <div class="section-title">Transaction History</div>
-    <div id="ldTransactions"></div>
-  </div>
-
-  <div class="view" id="view-transactions">
-    <div class="search-bar"><input type="text" id="searchTx" placeholder="Search transactions..." oninput="renderTransactions()" /></div>
-    <div id="transactionsList"></div>
-  </div>
-
-  <div class="view" id="view-reminders">
-    <div id="remindersList"></div>
-  </div>
-
-  <div class="view" id="view-chat" style="padding: 8px;">
-    <div class="chat-container">
-      <div class="chat-messages" id="chatMessages"></div>
-      <div class="chat-input-wrap">
-        <input type="text" id="chatInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter')sendChat()" />
-        <button class="chat-send" onclick="sendChat()">➤</button>
+    <!-- ADMIN PAGE -->
+    <div class="page" id="page-admin">
+      <div class="tabs">
+        <div class="tab active" onclick="setAdminTab(this,'staff')">👥 स्टाफ</div>
+        <div class="tab" onclick="setAdminTab(this,'log')">📋 लॉग</div>
+      </div>
+      <div id="admin-staff-section">
+        <button class="btn btn-primary btn-full mb8" onclick="openAddStaff()">+ नवीन स्टाफ जोडा</button>
+        <div id="staff-list"></div>
+      </div>
+      <div id="admin-log-section" style="display:none">
+        <div id="activity-list"></div>
       </div>
     </div>
-  </div>
 
-  <div class="view" id="view-activity">
-    <div id="activityList"></div>
-  </div>
-
-  <div class="view" id="view-staff">
-    <div id="staffList"></div>
-  </div>
-
-  <div class="view" id="view-search">
-    <div class="search-bar"><input type="text" id="globalSearch" placeholder="Search anything..." oninput="doGlobalSearch()" /></div>
-    <div id="searchResults"></div>
-  </div>
-
-  <div class="view" id="view-settings">
-    <div class="card">
-      <p class="card-title">Profile</p>
-      <p class="list-title" id="setUserName">-</p>
-      <p class="list-sub" id="setUserEmail">-</p>
-      <span class="badge badge-info" id="setUserRole">-</span>
-    </div>
-    <div class="card">
-      <p class="card-title">Appearance</p>
-      <div style="display:flex; gap:10px; margin-top:8px;">
-        <button class="btn btn-secondary" onclick="setTheme('light')">☀️ Light</button>
-        <button class="btn btn-secondary" onclick="setTheme('dark')">🌙 Dark</button>
+    <!-- SETTINGS PAGE -->
+    <div class="page" id="page-settings">
+      <div class="settings-section">
+        <h3>प्रोफाइल</h3>
+        <div class="settings-item">
+          <div class="settings-item-left">
+            <div class="settings-item-icon" style="background:var(--accent);color:#fff">👤</div>
+            <div>
+              <div class="settings-label" id="profile-name">-</div>
+              <div class="settings-sub" id="profile-role">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>थीम</h3>
+        <div class="settings-item" onclick="toggleDark()">
+          <div class="settings-item-left">
+            <div class="settings-item-icon" style="background:rgba(108,99,255,.2);color:var(--accent)">🌙</div>
+            <div>
+              <div class="settings-label">डार्क मोड</div>
+              <div class="settings-sub">गडद थीम</div>
+            </div>
+          </div>
+          <div class="toggle on" id="dark-toggle"></div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>खाते</h3>
+        <div class="settings-item" onclick="doLogout()">
+          <div class="settings-item-left">
+            <div class="settings-item-icon" style="background:rgba(224,85,85,.2);color:var(--danger)">🚪</div>
+            <div><div class="settings-label" style="color:var(--danger)">लॉगआउट</div></div>
+          </div>
+        </div>
       </div>
     </div>
-    <button class="btn btn-danger" onclick="doLogout()">Logout</button>
-  </div>
 
+    <!-- SEARCH PAGE -->
+    <div class="page" id="page-search">
+      <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" id="global-search" placeholder="शोधा..." oninput="doGlobalSearch()"/>
+        <span style="cursor:pointer;color:var(--text2)" onclick="goBack()">✕</span>
+      </div>
+      <div class="chip-row">
+        <div class="chip active" onclick="setSearchCat(this,'all')">सर्व</div>
+        <div class="chip" onclick="setSearchCat(this,'companies')">कंपनी</div>
+        <div class="chip" onclick="setSearchCat(this,'sites')">साइट</div>
+        <div class="chip" onclick="setSearchCat(this,'ledgers')">लेजर</div>
+        <div class="chip" onclick="setSearchCat(this,'transactions')">व्यवहार</div>
+      </div>
+      <div id="search-results"></div>
+    </div>
+
+  </div><!-- /pages -->
+
+  <!-- BOTTOM NAV -->
   <div class="bottom-nav">
-    <button class="nav-item active" data-view="dashboard" onclick="openView('dashboard')">
-      <span class="nav-icon">🏠</span><span>Home</span>
-    </button>
-    <button class="nav-item" data-view="companies" onclick="openView('companies')">
-      <span class="nav-icon">🏢</span><span>Companies</span>
-    </button>
-    <button class="nav-item" data-view="transactions" onclick="openView('transactions')">
-      <span class="nav-icon">💰</span><span>Transactions</span>
-    </button>
-    <button class="nav-item" data-view="reminders" onclick="openView('reminders')">
-      <span class="nav-icon">🔔</span><span>Reminders</span>
-    </button>
-    <button class="nav-item" data-view="chat" onclick="openView('chat')">
-      <span class="nav-icon">💬</span><span>Chat</span>
-    </button>
+    <div class="nav-item active" id="nav-dashboard" onclick="goPage('dashboard')">
+      <div class="nav-icon">🏠</div><span>होम</span>
+    </div>
+    <div class="nav-item" id="nav-companies" onclick="goPage('companies')">
+      <div class="nav-icon">🏢</div><span>कंपनी</span>
+    </div>
+    <div class="nav-item" id="nav-transactions" onclick="goPage('transactions')">
+      <div class="nav-icon">💸</div><span>व्यवहार</span>
+    </div>
+    <div class="nav-item" id="nav-reminders" onclick="goPage('reminders')">
+      <div class="nav-icon">🔔</div><span>रिमाइंडर</span>
+    </div>
+    <div class="nav-item" id="nav-chat" onclick="goPage('chat')">
+      <div class="nav-icon">💬</div><span>चॅट</span>
+      <div class="nav-badge" id="chat-badge" style="display:none"></div>
+    </div>
   </div>
 
-  <button class="fab" id="fab" onclick="fabAction()">+</button>
-</div>
+</div><!-- /main-app -->
 
-<div class="modal-backdrop" id="modal">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <h3 class="modal-title" id="modalTitle">Title</h3>
-    <div id="modalBody"></div>
-    <div class="modal-actions" id="modalActions"></div>
-  </div>
-</div>
-
+<!-- TOAST -->
 <div id="toast"></div>
 
+<!-- ====================== MODALS ====================== -->
+
+<!-- ADD/EDIT COMPANY -->
+<div class="modal-overlay" id="modal-company">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title" id="company-modal-title">नवीन कंपनी जोडा</div>
+    <div class="form-group"><label>कंपनीचे नाव *</label><input id="c-name" placeholder="कंपनीचे नाव"/></div>
+    <div class="form-group"><label>मालकाचे नाव</label><input id="c-owner" placeholder="मालकाचे नाव"/></div>
+    <div class="form-group"><label>फोन नंबर</label><input id="c-phone" type="tel" placeholder="फोन नंबर"/></div>
+    <div class="form-group"><label>पत्ता</label><textarea id="c-addr" placeholder="पत्ता"></textarea></div>
+    <div class="form-group"><label>नोट्स</label><textarea id="c-notes" placeholder="नोट्स"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-company')">रद्द करा</button>
+      <button class="btn btn-primary" onclick="saveCompany()">जतन करा</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT SITE -->
+<div class="modal-overlay" id="modal-site">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title" id="site-modal-title">नवीन साइट जोडा</div>
+    <div class="form-group"><label>कंपनी *</label><select id="s-company"><option value="">-- निवडा --</option></select></div>
+    <div class="form-group"><label>साइटचे नाव *</label><input id="s-name" placeholder="उदा. घर, बिल्डिंग"/></div>
+    <div class="form-group"><label>वर्णन</label><textarea id="s-desc" placeholder="वर्णन"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-site')">रद्द करा</button>
+      <button class="btn btn-primary" onclick="saveSite()">जतन करा</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT LEDGER -->
+<div class="modal-overlay" id="modal-ledger">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title" id="ledger-modal-title">नवीन लेजर जोडा</div>
+    <div class="form-group"><label>कंपनी *</label><select id="l-company"><option value="">-- निवडा --</option></select></div>
+    <div class="form-group"><label>व्यक्तीचे नाव *</label><input id="l-name" placeholder="व्यक्तीचे नाव"/></div>
+    <div class="form-group"><label>फोन</label><input id="l-phone" type="tel" placeholder="फोन"/></div>
+    <div class="form-group"><label>पत्ता</label><input id="l-addr" placeholder="पत्ता"/></div>
+    <div class="form-group"><label>सुरुवातीचे बॅलन्स</label><input id="l-opening" type="number" placeholder="0" value="0"/></div>
+    <div class="form-group"><label>नोट्स</label><textarea id="l-notes" placeholder="नोट्स"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-ledger')">रद्द करा</button>
+      <button class="btn btn-primary" onclick="saveLedger()">जतन करा</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT TRANSACTION -->
+<div class="modal-overlay" id="modal-tx">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title" id="tx-modal-title">नवीन व्यवहार</div>
+    <div class="form-group"><label>तारीख *</label><input id="tx-date" type="date"/></div>
+    <div class="form-group"><label>प्रकार *</label>
+      <select id="tx-type">
+        <option value="income">उत्पन्न (Income)</option>
+        <option value="expense">खर्च (Expense)</option>
+        <option value="advance">आगाऊ (Advance)</option>
+        <option value="receive">प्राप्त (Receive)</option>
+        <option value="payment">देणे (Payment)</option>
+      </select>
+    </div>
+    <div class="form-group"><label>कंपनी</label><select id="tx-company" onchange="onTxCompanyChange()"><option value="">-- कंपनी नाही --</option></select></div>
+    <div class="form-group"><label>साइट</label><select id="tx-site"><option value="">-- साइट नाही --</option></select></div>
+    <div class="form-group"><label>लेजर</label><select id="tx-ledger"><option value="">-- लेजर नाही --</option></select></div>
+    <div class="form-group"><label>रक्कम *</label><input id="tx-amount" type="number" placeholder="₹0"/></div>
+    <div class="form-group"><label>वर्णन</label><input id="tx-desc" placeholder="वर्णन"/></div>
+    <div class="form-group"><label>टीप</label><input id="tx-remarks" placeholder="टीप"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-tx')">रद्द करा</button>
+      <button class="btn btn-primary" onclick="saveTx()">जतन करा</button>
+    </div>
+  </div>
+</div>
+
+<!-- TRANSACTION DETAIL -->
+<div class="modal-overlay" id="modal-tx-detail">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title" id="tx-detail-title">व्यवहार तपशील</div>
+    <div id="tx-detail-body"></div>
+    <div class="modal-actions" id="tx-detail-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-tx-detail')">बंद करा</button>
+      <button class="btn btn-warn btn-sm" onclick="editCurrentTx()">संपादित करा</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteCurrentTx()">हटवा</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD REMINDER -->
+<div class="modal-overlay" id="modal-reminder">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title" id="reminder-modal-title">नवीन रिमाइंडर</div>
+    <div class="form-group"><label>शीर्षक *</label><input id="r-title" placeholder="रिमाइंडर शीर्षक"/></div>
+    <div class="form-group"><label>तारीख</label><input id="r-date" type="date"/></div>
+    <div class="form-group"><label>वेळ</label><input id="r-time" type="time"/></div>
+    <div class="form-group"><label>नोट्स</label><textarea id="r-notes" placeholder="नोट्स"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-reminder')">रद्द करा</button>
+      <button class="btn btn-primary" onclick="saveReminder()">जतन करा</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD STAFF -->
+<div class="modal-overlay" id="modal-staff">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title">नवीन स्टाफ जोडा</div>
+    <div class="form-group"><label>पूर्ण नाव *</label><input id="staff-name" placeholder="पूर्ण नाव"/></div>
+    <div class="form-group"><label>ईमेल *</label><input id="staff-email" type="email" placeholder="ईमेल"/></div>
+    <div class="form-group"><label>पासवर्ड *</label><input id="staff-pass" type="password" placeholder="पासवर्ड (कमीत कमी 6 अक्षरे)"/></div>
+    <div class="form-group"><label>फोन</label><input id="staff-phone" type="tel" placeholder="फोन"/></div>
+    <div class="form-group"><label>भूमिका</label>
+      <select id="staff-role"><option value="staff">स्टाफ</option><option value="admin">अॅडमिन</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-staff')">रद्द करा</button>
+      <button class="btn btn-primary" onclick="saveStaff()">जतन करा</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEDGER DETAIL VIEW -->
+<div class="modal-overlay" id="modal-ledger-detail">
+  <div class="modal" style="max-height:92vh">
+    <div class="modal-drag"></div>
+    <div id="ledger-detail-content"></div>
+    <button class="btn btn-ghost btn-full mt12" onclick="closeModal('modal-ledger-detail')">बंद करा</button>
+  </div>
+</div>
+
+<!-- COMPANY DETAIL -->
+<div class="modal-overlay" id="modal-company-detail">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title" id="co-detail-title">कंपनी तपशील</div>
+    <div id="co-detail-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-company-detail')">बंद करा</button>
+      <button class="btn btn-warn btn-sm" onclick="editCurrentCompany()">संपादित करा</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteCurrentCompany()">हटवा</button>
+    </div>
+  </div>
+</div>
+
 <script>
-/* ============================================================
-   SUPABASE CONFIG - तुमच्या actual values
-   ============================================================ */
-const SUPABASE_URL = "https://etvdonwfkapiwxtjohsh.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_36jkKPqHJb9xYUjhtFlMNg_54Eqbw-M"; // ← येथे तुमचा key टाका
+// =============================================
+// SUPABASE CONFIG - इथे तुमचे keys टाका
+// =============================================
+const SUPABASE_URL = 'https://thizsrfyzxtnujuxswwb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoaXpzcmZ5enh0bnVqdXhzd3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1MzEyMTAsImV4cCI6MjA5ODEwNzIxMH0.5Kf3FTQvIHM2zzcW3375FELTTnPtIpXVupCrZp6Jbsw';
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// =============================================
+// APP STATE
+// =============================================
 let currentUser = null;
 let currentProfile = null;
-let currentView = 'dashboard';
-let viewStack = ['dashboard'];
-let currentCompanyId = null;
-let currentLedgerId = null;
+let currentPage = 'dashboard';
+let prevPage = null;
+let txFilter = '';
+let reminderTab = 'pending';
+let adminTab = 'staff';
+let searchCat = 'all';
+let editingId = { company: null, site: null, ledger: null, tx: null, reminder: null };
+let allCompanies = [];
+let allTx = [];
 let chatChannel = null;
 
-const $ = (id) => document.getElementById(id);
-const fmt = (n) => '₹' + Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
-const today = () => new Date().toISOString().slice(0,10);
-const initials = (s) => (s || '?').split(' ').map(x => x[0]).join('').slice(0,2).toUpperCase();
-
-function toast(msg, type='') {
-  const t = $('toast');
-  t.textContent = msg;
-  t.className = 'show ' + type;
-  setTimeout(() => t.className = '', 2200);
-}
-
-function openModal(title, bodyHtml, actions) {
-  $('modalTitle').textContent = title;
-  $('modalBody').innerHTML = bodyHtml;
-  const act = $('modalActions');
-  act.innerHTML = '';
-  actions.forEach(a => {
-    const b = document.createElement('button');
-    b.className = 'btn ' + (a.class || '');
-    b.textContent = a.label;
-    b.onclick = a.onClick;
-    act.appendChild(b);
-  });
-  $('modal').classList.add('active');
-}
-function closeModal() { $('modal').classList.remove('active'); }
-$('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
-
-// Login Tab Switching
-document.addEventListener('DOMContentLoaded', function() {
-  const tabs = document.querySelectorAll('.login-tab');
-  tabs.forEach(function(tab) {
-    tab.addEventListener('click', function() {
-      const tabName = this.getAttribute('data-tab');
-      tabs.forEach(function(t) { t.classList.remove('active'); });
-      this.classList.add('active');
-      document.getElementById('loginForm').style.display = tabName === 'login' ? 'block' : 'none';
-      document.getElementById('signupForm').style.display = tabName === 'signup' ? 'block' : 'none';
-    });
-  });
-});
-
-function setTheme(t) {
-  document.documentElement.setAttribute('data-theme', t);
-  localStorage.setItem('theme', t);
-  document.querySelector('meta[name="theme-color"]').content = t === 'dark' ? '#0f172a' : '#6366f1';
-}
-setTheme(localStorage.getItem('theme') || 'light');
-
-async function doLogin() {
-  const email = $('loginEmail').value.trim();
-  const password = $('loginPassword').value;
-  if (!email || !password) return toast('Enter email & password', 'error');
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) return toast(error.message, 'error');
-  await afterLogin(data.user);
-}
-
-async function doSignup() {
-  const name = $('signupName').value.trim();
-  const phone = $('signupPhone').value.trim();
-  const email = $('signupEmail').value.trim();
-  const password = $('signupPassword').value;
-  
-  console.log('Signup attempt:', { name, phone, email });
-  
-  if (!name || !email || !password) return toast('Fill Name, Email & Password', 'error');
-  
-  try {
-    const { data, error } = await sb.auth.signUp({ email, password });
-    if (error) {
-      toast(error.message, 'error');
-      console.error('Supabase error:', error);
-      return;
-    }
-    console.log('Signup success:', data);
-    
-    if (data.user) {
-      const { count } = await sb.from('profiles').select('*', { count: 'exact', head: true });
-      const role = (count || 0) === 0 ? 'admin' : 'staff';
-      
-      await sb.from('profiles').insert({
-        id: data.user.id, name, phone, email, role,
-        created_at: new Date().toISOString()
-      });
-      
-      await logActivity('User Signup', name + ' registered as ' + role);
-      await afterLogin(data.user);
-      toast('Account created!', 'success');
-    } else {
-      toast('Check email to confirm', 'success');
-    }
-  } catch (err) {
-    toast('Error: ' + err.message, 'error');
-    console.error('Unexpected error:', err);
+// =============================================
+// INIT
+// =============================================
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await loadProfile();
+    showApp();
+  } else {
+    showAuth();
   }
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN') { currentUser = session.user; loadProfile().then(showApp); }
+    if (event === 'SIGNED_OUT') { showAuth(); }
+  });
+}
+
+async function loadProfile() {
+  const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+  currentProfile = data;
+}
+
+function showApp() {
+  document.getElementById('app-loader').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'flex';
+  document.getElementById('profile-name').textContent = currentProfile?.full_name || currentUser.email;
+  document.getElementById('profile-role').textContent = currentProfile?.role === 'admin' ? '🔑 अॅडमिन' : '👤 स्टाफ';
+
+  // Show admin nav
+  if (currentProfile?.role === 'admin') {
+    const adminNav = document.createElement('div');
+    adminNav.className = 'nav-item';
+    adminNav.id = 'nav-admin';
+    adminNav.innerHTML = '<div class="nav-icon">⚙️</div><span>अॅडमिन</span>';
+    adminNav.onclick = () => goPage('admin');
+    document.querySelector('.bottom-nav').appendChild(adminNav);
+  }
+  goPage('dashboard');
+  setupChat();
+}
+
+function showAuth() {
+  document.getElementById('app-loader').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'block';
+  document.getElementById('main-app').style.display = 'none';
+}
+
+// =============================================
+// AUTH
+// =============================================
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  if (!email || !pass) { document.getElementById('login-err').textContent = 'ईमेल आणि पासवर्ड आवश्यक आहे'; return; }
+  document.getElementById('login-err').textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) { document.getElementById('login-err').textContent = 'चुकीचा ईमेल किंवा पासवर्ड'; }
+  else { await logActivity('लॉगिन', 'यूजर लॉगिन केले'); }
 }
 
 async function doLogout() {
-  if (chatChannel) { sb.removeChannel(chatChannel); chatChannel = null; }
+  await logActivity('लॉगआउट', 'यूजर लॉगआउट केले');
   await sb.auth.signOut();
-  currentUser = null; currentProfile = null;
-  $('app').style.display = 'none';
-  $('loginScreen').style.display = 'flex';
 }
 
-async function afterLogin(user) {
-  currentUser = user;
-  let { data: prof } = await sb.from('profiles').select('*').eq('id', user.id).single();
-  if (!prof) {
-    const { count } = await sb.from('profiles').select('*', { count: 'exact', head: true });
-    const role = (count || 0) === 0 ? 'admin' : 'staff';
-    const { data: newProf } = await sb.from('profiles').insert({
-      id: user.id, name: user.email.split('@')[0], email: user.email, role,
-      created_at: new Date().toISOString()
-    }).select().single();
-    prof = newProf;
-  }
-  currentProfile = prof;
-  await logActivity('User Login', prof.name + ' logged in');
-  $('loginScreen').style.display = 'none';
-  $('app').style.display = 'block';
-  initApp();
+// =============================================
+// NAVIGATION
+// =============================================
+const PAGE_TITLES = {
+  dashboard:'डॅशबोर्ड',companies:'कंपन्या',sites:'साइट / काम',
+  ledgers:'व्यक्ती लेजर',transactions:'व्यवहार',reminders:'रिमाइंडर',
+  chat:'चॅट',admin:'अॅडमिन पॅनल',settings:'सेटिंग्ज',search:'शोध'
+};
+
+function goPage(page) {
+  prevPage = currentPage;
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('nav-' + page)?.classList.add('active');
+  document.getElementById('page-title').textContent = PAGE_TITLES[page] || page;
+  loadPage(page);
 }
 
-async function logActivity(action, details) {
-  if (!currentUser) return;
-  try {
-    await sb.from('activity_logs').insert({
-      user_id: currentUser.id,
-      user_name: currentProfile?.name || currentUser.email,
-      action, details,
-      created_at: new Date().toISOString()
-    });
-  } catch(e) { console.warn('log err', e); }
-}
+function goBack() { if (prevPage) goPage(prevPage); }
 
-function initApp() {
-  $('setUserName').textContent = currentProfile.name || '-';
-  $('setUserEmail').textContent = currentUser.email;
-  $('setUserRole').textContent = currentProfile.role.toUpperCase();
-  openView('dashboard');
-  subscribeChat();
-}
-
-function openView(v, push=true) {
-  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-  const target = $('view-' + v);
-  if (target) target.classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === v));
-  const titles = {
-    dashboard: 'Dashboard', companies: 'Companies', transactions: 'Transactions',
-    reminders: 'Reminders', chat: 'Team Chat', activity: 'Activity Log',
-    staff: 'Staff Management', settings: 'Settings', search: 'Search',
-    companyDetail: 'Company', ledgerDetail: 'Ledger'
-  };
-  $('pageTitle').textContent = titles[v] || v;
-  $('backBtn').style.display = (v === 'companyDetail' || v === 'ledgerDetail' || v === 'search' || v === 'settings' || v === 'activity' || v === 'staff') ? 'flex' : 'none';
-  if (push && viewStack[viewStack.length-1] !== v) viewStack.push(v);
-  currentView = v;
-  refreshView(v);
-}
-
-function goBack() {
-  if (viewStack.length > 1) {
-    viewStack.pop();
-    openView(viewStack[viewStack.length-1], false);
-  } else {
-    openView('dashboard', false);
+async function loadPage(page) {
+  switch(page) {
+    case 'dashboard': loadDashboard(); break;
+    case 'companies': loadCompanies(); break;
+    case 'sites': await populateCompanySelects(); loadSites(); break;
+    case 'ledgers': await populateCompanySelects(); loadLedgers(); break;
+    case 'transactions': loadTx(); populateCompanySelects(); break;
+    case 'reminders': loadReminders(); break;
+    case 'chat': scrollChatBottom(); break;
+    case 'admin': if(currentProfile?.role==='admin'){loadStaff(); if(adminTab==='log')loadActivityLog();} break;
   }
 }
 
-function refreshView(v) {
-  if (v === 'dashboard') renderDashboard();
-  else if (v === 'companies') renderCompanies();
-  else if (v === 'companyDetail') renderCompanyDetail();
-  else if (v === 'ledgerDetail') renderLedgerDetail();
-  else if (v === 'transactions') renderTransactions();
-  else if (v === 'reminders') renderReminders();
-  else if (v === 'chat') { scrollChatBottom(); renderChat(); }
-  else if (v === 'activity') renderActivity();
-  else if (v === 'staff') renderStaff();
-  else if (v === 'search') { $('globalSearch').value = ''; $('searchResults').innerHTML = ''; }
+// =============================================
+// DASHBOARD
+// =============================================
+async function loadDashboard() {
+  const today = new Date().toISOString().split('T')[0];
+  const { data: txs } = await sb.from('transactions').select('*').order('created_at',{ascending:false}).limit(100);
+  allTx = txs || [];
+
+  const todayTxs = allTx.filter(t => t.date === today);
+  const income = todayTxs.filter(t=>['income','receive'].includes(t.type)).reduce((s,t)=>s+Number(t.amount),0);
+  const expense = todayTxs.filter(t=>['expense','advance','payment'].includes(t.type)).reduce((s,t)=>s+Number(t.amount),0);
+  const totalIncome = allTx.filter(t=>['income','receive'].includes(t.type)).reduce((s,t)=>s+Number(t.amount),0);
+  const totalExpense = allTx.filter(t=>['expense','advance','payment'].includes(t.type)).reduce((s,t)=>s+Number(t.amount),0);
+
+  document.getElementById('dash-income').textContent = '₹'+fmt(income);
+  document.getElementById('dash-expense').textContent = '₹'+fmt(expense);
+  document.getElementById('dash-balance').textContent = '₹'+fmt(totalIncome - totalExpense);
+
+  // Recent Tx
+  const recent = allTx.slice(0,5);
+  const txEl = document.getElementById('dash-recent-tx');
+  if (!recent.length) { txEl.innerHTML = '<div class="empty"><div class="emoji">📭</div><p>व्यवहार नाहीत</p></div>'; }
+  else { txEl.innerHTML = recent.map(t => txItem(t)).join(''); }
+
+  // Reminders
+  const { data: rems } = await sb.from('reminders').select('*').eq('status','pending').order('reminder_date').limit(3);
+  const remEl = document.getElementById('dash-reminders');
+  if (!rems?.length) { remEl.innerHTML = '<div class="empty"><div class="emoji">🔔</div><p>रिमाइंडर नाहीत</p></div>'; }
+  else { remEl.innerHTML = rems.map(r=>`<div class="reminder-item"><div class="reminder-info"><div class="reminder-title">${r.title}</div><div class="reminder-sub">📅 ${r.reminder_date||'---'} ${r.reminder_time||''}</div></div></div>`).join(''); }
+
+  // Activity
+  const { data: acts } = await sb.from('activity_log').select('*').order('created_at',{ascending:false}).limit(5);
+  const actEl = document.getElementById('dash-activity');
+  if (!acts?.length) { actEl.innerHTML = '<div class="empty"><div class="emoji">📋</div><p>क्रिया नाहीत</p></div>'; }
+  else { actEl.innerHTML = acts.map(a=>logItem(a)).join(''); }
 }
 
-function fabAction() {
-  if (currentView === 'companies') openCompanyForm();
-  else if (currentView === 'companyDetail') openSiteOrLedgerChoice();
-  else if (currentView === 'ledgerDetail') openTransactionForm();
-  else if (currentView === 'transactions') openTransactionForm();
-  else if (currentView === 'reminders') openReminderForm();
-  else if (currentView === 'staff' && currentProfile.role === 'admin') openStaffForm();
-  else openTransactionForm();
+function txItem(t, onclick='') {
+  const icons = {income:'💚',expense:'❤️',advance:'🟡',receive:'💜',payment:'🟠'};
+  const labels = {income:'उत्पन्न',expense:'खर्च',advance:'आगाऊ',receive:'प्राप्त',payment:'देणे'};
+  const positive = ['income','receive'].includes(t.type);
+  return `<div class="tx-item" onclick="openTxDetail('${t.id}')">
+    <div class="tx-dot tx-${t.type}">${icons[t.type]||'💰'}</div>
+    <div class="tx-info">
+      <div class="tx-name">${t.description||labels[t.type]}</div>
+      <div class="tx-sub">📅 ${t.date} · <span class="badge badge-${t.type}">${labels[t.type]}</span></div>
+    </div>
+    <div class="tx-amount ${positive?'text-income':'text-expense'}">${positive?'+':'-'}₹${fmt(t.amount)}</div>
+  </div>`;
 }
 
-async function renderDashboard() {
-  const t = today();
-  const { data: tx } = await sb.from('transactions').select('amount,type,date');
-  let inc=0, exp=0, cash=0;
-  (tx || []).forEach(r => {
-    const a = Number(r.amount);
-    if (r.type === 'income' || r.type === 'receive') cash += a;
-    else cash -= a;
-    if (r.date === t) {
-      if (r.type === 'income' || r.type === 'receive') inc += a;
-      else exp += a;
-    }
-  });
-  $('statIncome').textContent = fmt(inc);
-  $('statExpense').textContent = fmt(exp);
-  $('statCash').textContent = fmt(cash);
-
-  const { data: recent } = await sb.from('transactions').select('*,companies(name),sites(name),ledgers(name)').order('date', { ascending: false }).limit(5);
-  $('recentTx').innerHTML = (recent && recent.length) ? recent.map(txCard).join('') : emptyHtml('No transactions yet', '💸');
-
-  const { data: rem } = await sb.from('reminders').select('*').eq('status','pending').gte('date', t).order('date').limit(5);
-  $('recentReminders').innerHTML = (rem && rem.length) ? rem.map(reminderCard).join('') : emptyHtml('No upcoming reminders', '📅');
-
-  const { data: act } = await sb.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(5);
-  $('recentActivities').innerHTML = (act && act.length) ? act.map(activityCard).join('') : emptyHtml('No activities', '📋');
+function logItem(a) {
+  return `<div class="log-item"><div class="log-dot">📌</div><div class="log-info"><div class="log-action">${a.action}</div><div class="log-user">👤 ${a.user_name||'Unknown'}</div><div class="log-time">🕐 ${timeAgo(a.created_at)}</div></div></div>`;
 }
 
-function txCard(t) {
-  const typeClass = t.type;
-  const sign = (t.type === 'income' || t.type === 'receive') ? '+' : '-';
-  const name = t.ledgers?.name || t.sites?.name || t.companies?.name || 'Transaction';
-  return '<div class="list-item" onclick="openTransactionDetail(\'' + t.id + '\')">' +
-    '<div class="list-avatar">' + initials(name) + '</div>' +
-    '<div class="list-body">' +
-    '<p class="list-title">' + escapeHtml(name) + '</p>' +
-    '<p class="list-sub">' + t.date + ' • ' + t.type + (t.description ? ' • ' + escapeHtml(t.description.slice(0,30)) : '') + '</p>' +
-    '</div>' +
-    '<div class="list-amount ' + typeClass + '">' + sign + fmt(t.amount) + '</div>' +
-    '</div>';
+// =============================================
+// COMPANIES
+// =============================================
+async function loadCompanies() {
+  let q = sb.from('companies').select('*').order('name');
+  if (currentProfile?.role !== 'admin') {
+    const { data: access } = await sb.from('staff_company_access').select('company_id').eq('staff_id', currentUser.id);
+    const ids = (access||[]).map(a => a.company_id);
+    if (ids.length) q = q.in('id', ids); else { document.getElementById('companies-list').innerHTML='<div class="empty"><div class="emoji">🏢</div><p>कोणतीही कंपनी नाही</p></div>'; return; }
+  }
+  const { data } = await q;
+  allCompanies = data || [];
+  renderCompanies(allCompanies);
 }
 
-function reminderCard(r) {
-  return '<div class="list-item" onclick="openReminderForm(\'' + r.id + '\')">' +
-    '<div class="list-avatar" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);">🔔</div>' +
-    '<div class="list-body">' +
-    '<p class="list-title">' + escapeHtml(r.title) + '</p>' +
-    '<p class="list-sub">' + r.date + ' ' + (r.time || '') + '</p>' +
-    '</div>' +
-    '<span class="badge badge-warning">' + r.status + '</span>' +
-    '</div>';
+function renderCompanies(list) {
+  const el = document.getElementById('companies-list');
+  if (!list.length) { el.innerHTML='<div class="empty"><div class="emoji">🏢</div><p>कंपनी नाही. + बटण दाबा</p></div>'; return; }
+  el.innerHTML = list.map(c=>`<div class="list-item" onclick="openCompanyDetail('${c.id}')">
+    <div class="list-avatar">🏢</div>
+    <div class="list-info"><div class="list-name">${c.name}</div><div class="list-sub">👤 ${c.owner_name||'-'} · 📞 ${c.phone||'-'}</div></div>
+    <div class="list-action"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openEditCompany('${c.id}')">✏️</button></div>
+  </div>`).join('');
 }
 
-function activityCard(a) {
-  return '<div class="list-item" style="cursor:default;">' +
-    '<div class="list-avatar" style="background:linear-gradient(135deg,#64748b,#94a3b8);">📝</div>' +
-    '<div class="list-body">' +
-    '<p class="list-title">' + escapeHtml(a.action) + '</p>' +
-    '<p class="list-sub">' + escapeHtml(a.user_name) + ' • ' + new Date(a.created_at).toLocaleString() + '</p>' +
-    '</div>' +
-    '</div>';
+function filterCompanies() {
+  const q = document.getElementById('company-search').value.toLowerCase();
+  renderCompanies(allCompanies.filter(c => c.name.toLowerCase().includes(q) || (c.owner_name||'').toLowerCase().includes(q)));
 }
 
-function emptyHtml(msg, icon) {
-  return '<div class="empty"><div class="empty-icon">' + icon + '</div>' + msg + '</div>';
+function openAddCompany() { editingId.company=null; document.getElementById('company-modal-title').textContent='नवीन कंपनी जोडा'; ['c-name','c-owner','c-phone','c-addr','c-notes'].forEach(id=>document.getElementById(id).value=''); openModal('modal-company'); }
+
+function openEditCompany(id) {
+  editingId.company = id;
+  const c = allCompanies.find(x=>x.id===id); if (!c) return;
+  document.getElementById('company-modal-title').textContent='कंपनी संपादित करा';
+  document.getElementById('c-name').value=c.name||''; document.getElementById('c-owner').value=c.owner_name||'';
+  document.getElementById('c-phone').value=c.phone||''; document.getElementById('c-addr').value=c.address||'';
+  document.getElementById('c-notes').value=c.notes||'';
+  closeModal('modal-company-detail'); openModal('modal-company');
 }
 
-function escapeHtml(s) {
-  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function saveCompany() {
+  const data = { name:v('c-name'),owner_name:v('c-owner'),phone:v('c-phone'),address:v('c-addr'),notes:v('c-notes') };
+  if (!data.name) { toast('कंपनीचे नाव आवश्यक आहे','error'); return; }
+  let res;
+  if (editingId.company) { res=await sb.from('companies').update(data).eq('id',editingId.company); }
+  else { data.created_by=currentUser.id; res=await sb.from('companies').insert([data]); }
+  if (res.error) { toast('त्रुटी: '+res.error.message,'error'); return; }
+  await logActivity(editingId.company?'कंपनी अपडेट':'कंपनी तयार', data.name);
+  toast('कंपनी जतन झाली ✓','success'); closeModal('modal-company'); loadCompanies(); populateCompanySelects();
 }
 
-async function renderCompanies() {
-  const q = ($('searchCompanies')?.value || '').toLowerCase();
-  const { data } = await sb.from('companies').select('*').order('created_at', { ascending: false });
-  const list = (data || []).filter(c => !q || c.name.toLowerCase().includes(q) || (c.owner||'').toLowerCase().includes(q));
-  $('companiesList').innerHTML = list.length ? list.map(c =>
-    '<div class="list-item" onclick="openCompany(\'' + c.id + '\')">' +
-    '<div class="list-avatar">' + initials(c.name) + '</div>' +
-    '<div class="list-body">' +
-    '<p class="list-title">' + escapeHtml(c.name) + '</p>' +
-    '<p class="list-sub">' + escapeHtml(c.owner || 'No owner') + (c.phone ? ' • ' + escapeHtml(c.phone) : '') + '</p>' +
-    '</div>' +
-    '<button class="icon-btn" onclick="event.stopPropagation();openCompanyMenu(\'' + c.id + '\')">⋮</button>' +
-    '</div>'
-  ).join('') : emptyHtml('No companies yet', '🏢');
+let _currentCompanyId = null;
+async function openCompanyDetail(id) {
+  _currentCompanyId = id;
+  const c = allCompanies.find(x=>x.id===id); if (!c) return;
+  document.getElementById('co-detail-title').textContent = c.name;
+  document.getElementById('co-detail-body').innerHTML = `
+    <div class="detail-row"><span class="detail-label">मालक</span><span class="detail-val">${c.owner_name||'-'}</span></div>
+    <div class="detail-row"><span class="detail-label">फोन</span><span class="detail-val">${c.phone||'-'}</span></div>
+    <div class="detail-row"><span class="detail-label">पत्ता</span><span class="detail-val">${c.address||'-'}</span></div>
+    <div class="detail-row"><span class="detail-label">नोट्स</span><span class="detail-val">${c.notes||'-'}</span></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm btn-full" onclick="closeModal('modal-company-detail');goPage('sites');document.getElementById('site-company-filter').value='${id}';loadSites()">🏗️ साइट पहा</button>
+      <button class="btn btn-ghost btn-sm btn-full" onclick="closeModal('modal-company-detail');goPage('ledgers');document.getElementById('ledger-company-filter').value='${id}';loadLedgers()">📒 लेजर पहा</button>
+    </div>`;
+  if (currentProfile?.role !== 'admin') { document.getElementById('tx-detail-actions'); }
+  openModal('modal-company-detail');
 }
 
-function openCompany(id) { currentCompanyId = id; openView('companyDetail'); }
-
-async function renderCompanyDetail() {
-  const { data: c } = await sb.from('companies').select('*').eq('id', currentCompanyId).single();
-  if (!c) return;
-  $('cdName').textContent = c.name;
-  $('cdInfo').innerHTML = '<p class="card-title">' + escapeHtml(c.name) + '</p>' +
-    '<p class="list-sub">Owner: ' + escapeHtml(c.owner || '-') + ' • ' + escapeHtml(c.phone || '-') + '</p>' +
-    '<p class="list-sub" style="margin-top:4px;">' + escapeHtml(c.address || '') + '</p>' +
-    (c.notes ? '<p class="list-sub" style="margin-top:4px;">📝 ' + escapeHtml(c.notes) + '</p>' : '');
-  
-  const { data: sites } = await sb.from('sites').select('*').eq('company_id', currentCompanyId).order('created_at', { ascending: false });
-  $('sitesList').innerHTML = (sites && sites.length) ? sites.map(s =>
-    '<div class="list-item" onclick="openSiteTransactions(\'' + s.id + '\',\'' + escapeHtml(s.name) + '\')">' +
-    '<div class="list-avatar" style="background:linear-gradient(135deg,#10b981,#34d399);">📍</div>' +
-    '<div class="list-body">' +
-    '<p class="list-title">' + escapeHtml(s.name) + '</p>' +
-    '<p class="list-sub">' + escapeHtml(s.notes || 'No notes') + '</p>' +
-    '</div>' +
-    '<button class="icon-btn" onclick="event.stopPropagation();openSiteMenu(\'' + s.id + '\')">⋮</button>' +
-    '</div>'
-  ).join('') : emptyHtml('No sites yet', '📍');
-
-  const { data: leds } = await sb.from('ledgers').select('*').eq('company_id', currentCompanyId).order('created_at', { ascending: false });
-  $('ledgersList').innerHTML = (leds && leds.length) ? leds.map(l =>
-    '<div class="list-item" onclick="openLedger(\'' + l.id + '\')">' +
-    '<div class="list-avatar" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);">📒</div>' +
-    '<div class="list-body">' +
-    '<p class="list-title">' + escapeHtml(l.name) + '</p>' +
-    '<p class="list-sub">' + escapeHtml(l.phone || '') + ' • Balance: ' + fmt(l.current_balance) + '</p>' +
-    '</div>' +
-    '<button class="icon-btn" onclick="event.stopPropagation();openLedgerMenu(\'' + l.id + '\')">⋮</button>' +
-    '</div>'
-  ).join('') : emptyHtml('No ledgers yet', '📒');
+function editCurrentCompany() { openEditCompany(_currentCompanyId); }
+async function deleteCurrentCompany() {
+  if (!confirm('हे कंपनी हटवायची आहे? सर्व साइट आणि लेजर देखील हटतील.')) return;
+  const { error } = await sb.from('companies').delete().eq('id', _currentCompanyId);
+  if (error) { toast('त्रुटी: '+error.message,'error'); return; }
+  await logActivity('कंपनी हटवली', _currentCompanyId);
+  toast('कंपनी हटवली ✓','success'); closeModal('modal-company-detail'); loadCompanies();
 }
 
-async function openSiteTransactions(siteId, siteName) {
-  currentCompanyId = null; currentLedgerId = null;
-  const { data: tx } = await sb.from('transactions').select('*,companies(name),sites(name),ledgers(name)').eq('site_id', siteId).order('date', { ascending: false });
-  openModal('Site: ' + siteName, (tx && tx.length) ? tx.map(txCard).join('') : emptyHtml('No transactions', '💸'), [{ label: 'Close', class: 'btn-secondary', onClick: closeModal }]);
+// =============================================
+// SITES
+// =============================================
+async function loadSites() {
+  const compId = document.getElementById('site-company-filter').value;
+  const el = document.getElementById('sites-list');
+  if (!compId) { el.innerHTML='<div class="empty"><div class="emoji">🏗️</div><p>वरून कंपनी निवडा</p></div>'; return; }
+  const { data } = await sb.from('sites').select('*').eq('company_id',compId).order('name');
+  if (!data?.length) { el.innerHTML='<div class="empty"><div class="emoji">🏗️</div><p>साइट नाही. + दाबा</p></div>'; return; }
+  el.innerHTML = data.map(s=>`<div class="list-item">
+    <div class="list-avatar">🏗️</div>
+    <div class="list-info"><div class="list-name">${s.name}</div><div class="list-sub">${s.description||'-'}</div></div>
+    <div class="list-action">
+      <button class="btn btn-ghost btn-sm" onclick="openEditSite('${s.id}','${compId}')">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteSite('${s.id}')">🗑️</button>
+    </div>
+  </div>`).join('');
 }
 
-function openCompanyForm(id=null) {
-  const isEdit = !!id;
-  const load = async () => {
-    let c = { name:'', owner:'', phone:'', address:'', notes:'' };
-    if (isEdit) { const { data } = await sb.from('companies').select('*').eq('id', id).single(); if (data) c = data; }
-    openModal(isEdit ? 'Edit Company' : 'New Company',
-      '<div class="field"><label>Company Name</label><input id="f_name" value="' + escapeHtml(c.name) + '" /></div>' +
-      '<div class="field"><label>Owner Name</label><input id="f_owner" value="' + escapeHtml(c.owner||'') + '" /></div>' +
-      '<div class="field"><label>Phone</label><input id="f_phone" value="' + escapeHtml(c.phone||'') + '" /></div>' +
-      '<div class="field"><label>Address</label><textarea id="f_address">' + escapeHtml(c.address||'') + '</textarea></div>' +
-      '<div class="field"><label>Notes</label><textarea id="f_notes">' + escapeHtml(c.notes||'') + '</textarea></div>',
-      [
-        { label: 'Cancel', class: 'btn-secondary', onClick: closeModal },
-        { label: isEdit ? 'Update' : 'Create', onClick: async () => {
-          const payload = { name: $('f_name').value.trim(), owner: $('f_owner').value.trim(), phone: $('f_phone').value.trim(), address: $('f_address').value.trim(), notes: $('f_notes').value.trim(), created_by: currentUser.id };
-          if (!payload.name) return toast('Name required', 'error');
-          if (isEdit) await sb.from('companies').update(payload).eq('id', id);
-          else { payload.created_at = new Date().toISOString(); await sb.from('companies').insert(payload); await logActivity('Company Created', payload.name); }
-          closeModal(); renderCompanies(); toast('Saved', 'success');
-        }}
-      ]
-    );
-  };
-  load();
+function openAddSite() {
+  editingId.site=null;
+  document.getElementById('site-modal-title').textContent='नवीन साइट';
+  document.getElementById('s-name').value=''; document.getElementById('s-desc').value='';
+  const sel = document.getElementById('site-company-filter');
+  document.getElementById('s-company').value = sel.value||'';
+  openModal('modal-site');
 }
 
-function openCompanyMenu(id) {
-  openModal('Company Options', '<button class="btn" style="margin-bottom:10px;" onclick="closeModal();openCompanyForm(\'' + id + '\')">✏️ Edit</button><button class="btn btn-danger" onclick="deleteCompany(\'' + id + '\')">🗑️ Delete</button>', [{ label: 'Close', class: 'btn-secondary', onClick: closeModal }]);
+async function openEditSite(id, compId) {
+  editingId.site = id;
+  const { data:s } = await sb.from('sites').select('*').eq('id',id).single();
+  document.getElementById('site-modal-title').textContent='साइट संपादित करा';
+  document.getElementById('s-company').value=compId;
+  document.getElementById('s-name').value=s.name||'';
+  document.getElementById('s-desc').value=s.description||'';
+  openModal('modal-site');
 }
 
-async function deleteCompany(id) {
-  if (!confirm('Delete this company and all its sites/ledgers?')) return;
-  await sb.from('sites').delete().eq('company_id', id);
-  await sb.from('ledgers').delete().eq('company_id', id);
-  await sb.from('transactions').delete().eq('company_id', id);
-  await sb.from('companies').delete().eq('id', id);
-  await logActivity('Company Deleted', id);
-  closeModal(); renderCompanies(); toast('Deleted', 'success');
-}
-
-function openSiteOrLedgerChoice() {
-  openModal('Add to Company', '<button class="btn" style="margin-bottom:10px;" onclick="closeModal();openSiteForm()">📍 New Site</button><button class="btn btn-secondary" onclick="closeModal();openLedgerForm()">📒 New Ledger</button>', [{ label: 'Cancel', class: 'btn-secondary', onClick: closeModal }]);
-}
-
-function openSiteForm(id=null) {
-  const isEdit = !!id;
-  const load = async () => {
-    let s = { name:'', notes:'' };
-    if (isEdit) { const { data } = await sb.from('sites').select('*').eq('id', id).single(); if (data) s = data; }
-    openModal(isEdit ? 'Edit Site' : 'New Site',
-      '<div class="field"><label>Site Name</label><input id="f_name" value="' + escapeHtml(s.name) + '" placeholder="e.g. House, Building" /></div>' +
-      '<div class="field"><label>Notes</label><textarea id="f_notes">' + escapeHtml(s.notes||'') + '</textarea></div>',
-      [
-        { label: 'Cancel', class: 'btn-secondary', onClick: closeModal },
-        { label: isEdit ? 'Update' : 'Create', onClick: async () => {
-          const payload = { company_id: currentCompanyId, name: $('f_name').value.trim(), notes: $('f_notes').value.trim(), created_by: currentUser.id };
-          if (!payload.name) return toast('Name required', 'error');
-          if (isEdit) await sb.from('sites').update(payload).eq('id', id);
-          else { payload.created_at = new Date().toISOString(); await sb.from('sites').insert(payload); await logActivity('Site Created', payload.name); }
-          closeModal(); renderCompanyDetail(); toast('Saved', 'success');
-        }}
-      ]
-    );
-  };
-  load();
-}
-
-function openSiteMenu(id) {
-  openModal('Site Options', '<button class="btn" style="margin-bottom:10px;" onclick="closeModal();openSiteForm(\'' + id + '\')">✏️ Edit</button><button class="btn btn-danger" onclick="deleteSite(\'' + id + '\')">🗑️ Delete</button>', [{ label: 'Close', class: 'btn-secondary', onClick: closeModal }]);
+async function saveSite() {
+  const data={company_id:v('s-company'),name:v('s-name'),description:v('s-desc')};
+  if (!data.name||!data.company_id) { toast('नाव आणि कंपनी आवश्यक','error'); return; }
+  let res;
+  if (editingId.site) res=await sb.from('sites').update(data).eq('id',editingId.site);
+  else { data.created_by=currentUser.id; res=await sb.from('sites').insert([data]); }
+  if (res.error) { toast('त्रुटी: '+res.error.message,'error'); return; }
+  await logActivity(editingId.site?'साइट अपडेट':'साइट तयार', data.name);
+  toast('साइट जतन ✓','success'); closeModal('modal-site'); loadSites();
 }
 
 async function deleteSite(id) {
-  if (!confirm('Delete this site?')) return;
-  await sb.from('transactions').delete().eq('site_id', id);
-  await sb.from('sites').delete().eq('id', id);
-  closeModal(); renderCompanyDetail(); toast('Deleted', 'success');
+  if (!confirm('साइट हटवायची?')) return;
+  await sb.from('sites').delete().eq('id',id);
+  await logActivity('साइट हटवली', id);
+  toast('साइट हटवली ✓','success'); loadSites();
 }
 
-function openLedgerForm(id=null) {
-  const isEdit = !!id;
-  const load = async () => {
-    let l = { name:'', phone:'', address:'', opening_balance:0, current_balance:0, notes:'' };
-    if (isEdit) { const { data } = await sb.from('ledgers').select('*').eq('id', id).single(); if (data) l = data; }
-    openModal(isEdit ? 'Edit Ledger' : 'New Ledger',
-      '<div class="field"><label>Person Name</label><input id="f_name" value="' + escapeHtml(l.name) + '" /></div>' +
-      '<div class="field"><label>Phone</label><input id="f_phone" value="' + escapeHtml(l.phone||'') + '" /></div>' +
-      '<div class="field"><label>Address</label><textarea id="f_address">' + escapeHtml(l.address||'') + '</textarea></div>' +
-      '<div class="field"><label>Opening Balance</label><input id="f_opening" type="number" step="0.01" value="' + (l.opening_balance||0) + '" /></div>' +
-      '<div class="field"><label>Notes</label><textarea id="f_notes">' + escapeHtml(l.notes||'') + '</textarea></div>',
-      [
-        { label: 'Cancel', class: 'btn-secondary', onClick: closeModal },
-        { label: isEdit ? 'Update' : 'Create', onClick: async () => {
-          const opening = Number($('f_opening').value) || 0;
-          const payload = { company_id: currentCompanyId, name: $('f_name').value.trim(), phone: $('f_phone').value.trim(), address: $('f_address').value.trim(), opening_balance: opening, notes: $('f_notes').value.trim(), created_by: currentUser.id };
-          if (!payload.name) return toast('Name required', 'error');
-          if (isEdit) { const cb = await computeLedgerBalance(id, opening); payload.current_balance = cb; await sb.from('ledgers').update(payload).eq('id', id); }
-          else { payload.current_balance = opening; payload.created_at = new Date().toISOString(); await sb.from('ledgers').insert(payload); await logActivity('Ledger Created', payload.name); }
-          closeModal(); renderCompanyDetail(); toast('Saved', 'success');
-        }}
-      ]
-    );
-  };
-  load();
+// =============================================
+// LEDGERS
+// =============================================
+async function loadLedgers() {
+  const compId = document.getElementById('ledger-company-filter').value;
+  const el = document.getElementById('ledgers-list');
+  if (!compId) { el.innerHTML='<div class="empty"><div class="emoji">📒</div><p>वरून कंपनी निवडा</p></div>'; return; }
+  const { data } = await sb.from('ledgers').select('*').eq('company_id',compId).order('person_name');
+  if (!data?.length) { el.innerHTML='<div class="empty"><div class="emoji">📒</div><p>लेजर नाही. + दाबा</p></div>'; return; }
+  el.innerHTML = data.map(l=>{
+    const bal = Number(l.current_balance||0);
+    const balColor = bal>=0?'text-income':'text-expense';
+    return `<div class="list-item" onclick="openLedgerDetail('${l.id}')">
+      <div class="list-avatar">📒</div>
+      <div class="list-info"><div class="list-name">${l.person_name}</div><div class="list-sub">📞 ${l.phone||'-'}</div></div>
+      <div class="${balColor}" style="font-weight:700;font-size:.95rem">₹${fmt(bal)}</div>
+    </div>`;
+  }).join('');
 }
 
-async function computeLedgerBalance(id, opening) {
-  const { data } = await sb.from('transactions').select('amount,type').eq('ledger_id', id);
-  let bal = Number(opening) || 0;
-  (data || []).forEach(t => { const a = Number(t.amount); if (t.type === 'income' || t.type === 'receive') bal += a; else bal -= a; });
-  return bal;
+function openAddLedger() {
+  editingId.ledger=null;
+  document.getElementById('ledger-modal-title').textContent='नवीन लेजर';
+  ['l-name','l-phone','l-addr','l-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('l-opening').value='0';
+  document.getElementById('l-company').value=document.getElementById('ledger-company-filter').value||'';
+  openModal('modal-ledger');
 }
 
-function openLedgerMenu(id) {
-  openModal('Ledger Options', '<button class="btn" style="margin-bottom:10px;" onclick="closeModal();openLedger(\'' + id + '\')">👁️ View</button><button class="btn btn-secondary" style="margin-bottom:10px;" onclick="closeModal();openLedgerForm(\'' + id + '\')">✏️ Edit</button><button class="btn btn-danger" onclick="deleteLedger(\'' + id + '\')">🗑️ Delete</button>', [{ label: 'Close', class: 'btn-secondary', onClick: closeModal }]);
+async function saveLedger() {
+  const data={company_id:v('l-company'),person_name:v('l-name'),phone:v('l-phone'),address:v('l-addr'),opening_balance:Number(v('l-opening'))||0,current_balance:Number(v('l-opening'))||0,notes:v('l-notes')};
+  if (!data.person_name||!data.company_id) { toast('नाव आणि कंपनी आवश्यक','error'); return; }
+  let res;
+  if (editingId.ledger) res=await sb.from('ledgers').update(data).eq('id',editingId.ledger);
+  else { data.created_by=currentUser.id; res=await sb.from('ledgers').insert([data]); }
+  if (res.error) { toast('त्रुटी: '+res.error.message,'error'); return; }
+  await logActivity('लेजर तयार', data.person_name);
+  toast('लेजर जतन ✓','success'); closeModal('modal-ledger'); loadLedgers();
 }
 
-async function deleteLedger(id) {
-  if (!confirm('Delete this ledger and its transactions?')) return;
-  await sb.from('transactions').delete().eq('ledger_id', id);
-  await sb.from('ledgers').delete().eq('id', id);
-  closeModal(); renderCompanyDetail(); toast('Deleted', 'success');
-}
-
-async function openLedger(id) { currentLedgerId = id; openView('ledgerDetail'); }
-
-async function renderLedgerDetail() {
-  const { data: l } = await sb.from('ledgers').select('*,companies(name)').eq('id', currentLedgerId).single();
+async function openLedgerDetail(id) {
+  const { data:l } = await sb.from('ledgers').select('*').eq('id',id).single();
   if (!l) return;
-  $('ldBreadcrumb').innerHTML = '<a onclick="openView(\'companies\')">Companies</a> <span>›</span> <a onclick="openCompany(\'' + l.company_id + '\')">' + escapeHtml(l.companies?.name||'') + '</a> <span>›</span> <span>' + escapeHtml(l.name) + '</span>';
-  $('ldInfo').innerHTML = '<p class="card-title">' + escapeHtml(l.name) + '</p>' +
-    '<p class="list-sub">📞 ' + escapeHtml(l.phone||'-') + ' • 📍 ' + escapeHtml(l.address||'-') + '</p>' +
-    '<div style="display:flex; gap:10px; margin-top:10px;">' +
-    '<div style="flex:1; background:var(--surface-2); padding:10px; border-radius:10px;"><div style="font-size:11px; color:var(--text-muted);">Opening</div><div style="font-weight:700;">' + fmt(l.opening_balance) + '</div></div>' +
-    '<div style="flex:1; background:var(--surface-2); padding:10px; border-radius:10px;"><div style="font-size:11px; color:var(--text-muted);">Current</div><div style="font-weight:700; color:var(--primary);">' + fmt(l.current_balance) + '</div></div></div>' +
-    (l.notes ? '<p class="list-sub" style="margin-top:8px;">📝 ' + escapeHtml(l.notes) + '</p>' : '');
-  const { data: tx } = await sb.from('transactions').select('*,companies(name),sites(name)').eq('ledger_id', currentLedgerId).order('date', { ascending: false });
-  $('ldTransactions').innerHTML = (tx && tx.length) ? tx.map(txCard).join('') : emptyHtml('No transactions', '💸');
+  const { data:txs } = await sb.from('transactions').select('*').eq('ledger_id',id).order('date',{ascending:false});
+  const bal = Number(l.current_balance||0);
+  let html=`<div class="ledger-balance-card"><div class="label">वर्तमान बॅलन्स</div><div class="val">₹${fmt(bal)}</div><div style="margin-top:8px;font-size:.85rem;opacity:.8">${l.person_name}</div></div>`;
+  html+=`<div class="card"><div class="detail-row"><span class="detail-label">फोन</span><span class="detail-val">${l.phone||'-'}</span></div><div class="detail-row"><span class="detail-label">पत्ता</span><span class="detail-val">${l.address||'-'}</span></div><div class="detail-row"><span class="detail-label">सुरुवातीचे बॅलन्स</span><span class="detail-val">₹${fmt(l.opening_balance)}</span></div></div>`;
+  html+='<div class="section-hdr" style="margin-top:4px"><h3>व्यवहार इतिहास</h3></div>';
+  if (!txs?.length) html+='<div class="empty"><div class="emoji">📭</div><p>व्यवहार नाहीत</p></div>';
+  else html+=txs.map(t=>txItem(t)).join('');
+  document.getElementById('ledger-detail-content').innerHTML=html;
+  openModal('modal-ledger-detail');
 }
 
-async function renderTransactions() {
-  const q = ($('searchTx')?.value || '').toLowerCase();
-  const { data } = await sb.from('transactions').select('*,companies(name),sites(name),ledgers(name)').order('date', { ascending: false }).limit(100);
-  const list = (data || []).filter(t => {
-    if (!q) return true;
-    return (t.description||'').toLowerCase().includes(q) || (t.ledgers?.name||'').toLowerCase().includes(q) || (t.sites?.name||'').toLowerCase().includes(q) || (t.companies?.name||'').toLowerCase().includes(q) || t.type.includes(q);
-  });
-  $('transactionsList').innerHTML = list.length ? list.map(txCard).join('') : emptyHtml('No transactions', '💸');
+// =============================================
+// TRANSACTIONS
+// =============================================
+async function loadTx() {
+  let q = sb.from('transactions').select('*').order('date',{ascending:false}).order('created_at',{ascending:false}).limit(200);
+  if (txFilter) q=q.eq('type',txFilter);
+  if (currentProfile?.role!=='admin') q=q.eq('created_by',currentUser.id);
+  const { data } = await q;
+  allTx = data||[];
+  const el=document.getElementById('tx-list');
+  if (!allTx.length) { el.innerHTML='<div class="empty"><div class="emoji">💸</div><p>व्यवहार नाहीत</p></div>'; return; }
+  el.innerHTML = allTx.map(t=>txItem(t)).join('');
 }
 
-function openTransactionForm(id=null) {
-  const isEdit = !!id;
-  const load = async () => {
-    let t = { date: today(), company_id:'', site_id:'', ledger_id:'', amount:0, type:'expense', description:'', remarks:'' };
-    if (isEdit) { const { data } = await sb.from('transactions').select('*').eq('id', id).single(); if (data) t = data; }
-    const { data: cos } = await sb.from('companies').select('id,name').order('name');
-    const { data: sis } = await sb.from('sites').select('id,name,company_id').order('name');
-    const { data: les } = await sb.from('ledgers').select('id,name,company_id').order('name');
-    const coOpts = (cos||[]).map(c => '<option value="' + c.id + '"' + (c.id===t.company_id?' selected':'') + '>' + escapeHtml(c.name) + '</option>').join('');
-    openModal(isEdit ? 'Edit Transaction' : 'New Transaction',
-      '<div class="field"><label>Date</label><input id="f_date" type="date" value="' + t.date + '" /></div>' +
-      '<div class="field"><label>Type</label><select id="f_type">' + ['income','expense','advance','receive','payment'].map(tp => '<option value="' + tp + '"' + (tp===t.type?' selected':'') + '>' + tp.toUpperCase() + '</option>').join('') + '</select></div>' +
-      '<div class="field"><label>Company</label><select id="f_company" onchange="updateTxSelects()"><option value="">-- Select --</option>' + coOpts + '</select></div>' +
-      '<div class="field"><label>Site</label><select id="f_site"><option value="">-- None --</option></select></div>' +
-      '<div class="field"><label>Ledger (Person)</label><select id="f_ledger"><option value="">-- None --</option></select></div>' +
-      '<div class="field"><label>Amount</label><input id="f_amount" type="number" step="0.01" value="' + t.amount + '" /></div>' +
-      '<div class="field"><label>Description</label><input id="f_desc" value="' + escapeHtml(t.description||'') + '" /></div>' +
-      '<div class="field"><label>Remarks</label><textarea id="f_remarks">' + escapeHtml(t.remarks||'') + '</textarea></div>',
-      [
-        { label: 'Cancel', class: 'btn-secondary', onClick: closeModal },
-        { label: isEdit ? 'Update' : 'Save', onClick: async () => {
-          const payload = { date: $('f_date').value, type: $('f_type').value, company_id: $('f_company').value || null, site_id: $('f_site').value || null, ledger_id: $('f_ledger').value || null, amount: Number($('f_amount').value) || 0, description: $('f_desc').value.trim(), remarks: $('f_remarks').value.trim(), created_by: currentUser.id };
-          if (!payload.amount) return toast('Amount required', 'error');
-          const oldLedger = isEdit ? (await sb.from('transactions').select('ledger_id,amount,type').eq('id', id).single()).data : null;
-          if (isEdit) {
-            payload.updated_at = new Date().toISOString();
-            await sb.from('transactions').update(payload).eq('id', id);
-            if (oldLedger?.ledger_id) await refreshLedgerBalance(oldLedger.ledger_id);
-            if (payload.ledger_id && payload.ledger_id !== oldLedger?.ledger_id) await refreshLedgerBalance(payload.ledger_id);
-            await logActivity('Transaction Edited', payload.type + ' ' + fmt(payload.amount));
-          } else {
-            payload.created_at = new Date().toISOString();
-            await sb.from('transactions').insert(payload);
-            if (payload.ledger_id) await refreshLedgerBalance(payload.ledger_id);
-            await logActivity('Transaction Added', payload.type + ' ' + fmt(payload.amount));
-          }
-          closeModal();
-          if (currentView === 'ledgerDetail') renderLedgerDetail();
-          else if (currentView === 'companyDetail') renderCompanyDetail();
-          else if (currentView === 'transactions') renderTransactions();
-          else renderDashboard();
-          toast('Saved', 'success');
-        }}
-      ]
-    );
-    window._txSites = sis || [];
-    window._txLeds = les || [];
-    updateTxSelects(t.site_id, t.ledger_id);
+function setTxFilter(el, type) {
+  txFilter=type;
+  document.querySelectorAll('#tx-type-chips .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  loadTx();
+}
+
+async function openAddTx() {
+  editingId.tx=null;
+  document.getElementById('tx-modal-title').textContent='नवीन व्यवहार';
+  document.getElementById('tx-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('tx-type').value='income';
+  document.getElementById('tx-amount').value='';
+  document.getElementById('tx-desc').value=''; document.getElementById('tx-remarks').value='';
+  document.getElementById('tx-site').innerHTML='<option value="">-- साइट नाही --</option>';
+  document.getElementById('tx-ledger').innerHTML='<option value="">-- लेजर नाही --</option>';
+  openModal('modal-tx');
+}
+
+async function onTxCompanyChange() {
+  const compId=v('tx-company');
+  document.getElementById('tx-site').innerHTML='<option value="">-- साइट नाही --</option>';
+  document.getElementById('tx-ledger').innerHTML='<option value="">-- लेजर नाही --</option>';
+  if (!compId) return;
+  const [{ data:sites },{ data:ledgers }] = await Promise.all([
+    sb.from('sites').select('id,name').eq('company_id',compId),
+    sb.from('ledgers').select('id,person_name').eq('company_id',compId)
+  ]);
+  document.getElementById('tx-site').innerHTML='<option value="">-- साइट नाही --</option>'+(sites||[]).map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  document.getElementById('tx-ledger').innerHTML='<option value="">-- लेजर नाही --</option>'+(ledgers||[]).map(l=>`<option value="${l.id}">${l.person_name}</option>`).join('');
+}
+
+async function saveTx() {
+  const data={
+    date:v('tx-date'),type:v('tx-type'),company_id:v('tx-company')||null,
+    site_id:v('tx-site')||null,ledger_id:v('tx-ledger')||null,
+    amount:Number(v('tx-amount')),description:v('tx-desc'),remarks:v('tx-remarks')
   };
-  load();
+  if (!data.date||!data.amount) { toast('तारीख आणि रक्कम आवश्यक','error'); return; }
+  let res;
+  if (editingId.tx) res=await sb.from('transactions').update(data).eq('id',editingId.tx);
+  else { data.created_by=currentUser.id; res=await sb.from('transactions').insert([data]); }
+  if (res.error) { toast('त्रुटी: '+res.error.message,'error'); return; }
+  await logActivity(editingId.tx?'व्यवहार अपडेट':'व्यवहार जोडला', `₹${data.amount} - ${data.type}`);
+  toast('व्यवहार जतन ✓','success'); closeModal('modal-tx'); loadTx(); if(currentPage==='dashboard')loadDashboard();
 }
 
-function updateTxSelects(preSite=null, preLedger=null) {
-  const cid = $('f_company').value;
-  const sites = (window._txSites || []).filter(s => !cid || s.company_id === cid);
-  const leds = (window._txLeds || []).filter(l => !cid || l.company_id === cid);
-  $('f_site').innerHTML = '<option value="">-- None --</option>' + sites.map(s => '<option value="' + s.id + '"' + (s.id===preSite?' selected':'') + '>' + escapeHtml(s.name) + '</option>').join('');
-  $('f_ledger').innerHTML = '<option value="">-- None --</option>' + leds.map(l => '<option value="' + l.id + '"' + (l.id===preLedger?' selected':'') + '>' + escapeHtml(l.name) + '</option>').join('');
+let _currentTxId=null;
+async function openTxDetail(id) {
+  _currentTxId=id;
+  const t=allTx.find(x=>x.id===id); if(!t) return;
+  const labels={income:'उत्पन्न',expense:'खर्च',advance:'आगाऊ',receive:'प्राप्त',payment:'देणे'};
+  const positive=['income','receive'].includes(t.type);
+  document.getElementById('tx-detail-title').innerHTML=`<span class="badge badge-${t.type}">${labels[t.type]}</span> व्यवहार`;
+  document.getElementById('tx-detail-body').innerHTML=`
+    <div style="text-align:center;padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:12px">
+      <div style="font-size:2rem;font-weight:800" class="${positive?'text-income':'text-expense'}">${positive?'+':'-'}₹${fmt(t.amount)}</div>
+      <div style="font-size:.85rem;color:var(--text2);margin-top:4px">📅 ${t.date}</div>
+    </div>
+    <div class="detail-row"><span class="detail-label">वर्णन</span><span class="detail-val">${t.description||'-'}</span></div>
+    <div class="detail-row"><span class="detail-label">टीप</span><span class="detail-val">${t.remarks||'-'}</span></div>
+  `;
+  const canEdit = currentProfile?.role==='admin'||t.created_by===currentUser.id;
+  document.getElementById('tx-detail-actions').innerHTML=`
+    <button class="btn btn-ghost" onclick="closeModal('modal-tx-detail')">बंद करा</button>
+    ${canEdit?`<button class="btn btn-warn btn-sm" onclick="editCurrentTx()">✏️ संपादित</button><button class="btn btn-danger btn-sm" onclick="deleteCurrentTx()">🗑️ हटवा</button>`:''}
+  `;
+  openModal('modal-tx-detail');
 }
 
-async function refreshLedgerBalance(ledgerId) {
-  const { data: l } = await sb.from('ledgers').select('opening_balance').eq('id', ledgerId).single();
-  if (!l) return;
-  const cb = await computeLedgerBalance(ledgerId, l.opening_balance);
-  await sb.from('ledgers').update({ current_balance: cb }).eq('id', ledgerId);
+async function editCurrentTx() {
+  const t=allTx.find(x=>x.id===_currentTxId); if(!t) return;
+  editingId.tx=t.id;
+  document.getElementById('tx-modal-title').textContent='व्यवहार संपादित करा';
+  document.getElementById('tx-date').value=t.date;
+  document.getElementById('tx-type').value=t.type;
+  document.getElementById('tx-company').value=t.company_id||'';
+  await onTxCompanyChange();
+  document.getElementById('tx-site').value=t.site_id||'';
+  document.getElementById('tx-ledger').value=t.ledger_id||'';
+  document.getElementById('tx-amount').value=t.amount;
+  document.getElementById('tx-desc').value=t.description||'';
+  document.getElementById('tx-remarks').value=t.remarks||'';
+  closeModal('modal-tx-detail'); openModal('modal-tx');
 }
 
-async function openTransactionDetail(id) {
-  const { data: t } = await sb.from('transactions').select('*,companies(name),sites(name),ledgers(name)').eq('id', id).single();
-  if (!t) return;
-  openModal('Transaction',
-    '<div style="background:var(--surface-2); padding:12px; border-radius:12px; margin-bottom:12px;"><div style="font-size:12px; color:var(--text-muted);">Amount</div><div style="font-size:24px; font-weight:700; color:' + ((t.type==='income'||t.type==='receive')?'var(--success)':'var(--danger)') + ';">' + ((t.type==='income'||t.type==='receive')?'+':'-') + fmt(t.amount) + '</div></div>' +
-    '<p><strong>Type:</strong> ' + t.type.toUpperCase() + '</p><p><strong>Date:</strong> ' + t.date + '</p>' +
-    (t.companies?.name ? '<p><strong>Company:</strong> ' + escapeHtml(t.companies.name) + '</p>' : '') +
-    (t.sites?.name ? '<p><strong>Site:</strong> ' + escapeHtml(t.sites.name) + '</p>' : '') +
-    (t.ledgers?.name ? '<p><strong>Ledger:</strong> ' + escapeHtml(t.ledgers.name) + '</p>' : '') +
-    (t.description ? '<p><strong>Description:</strong> ' + escapeHtml(t.description) + '</p>' : '') +
-    (t.remarks ? '<p><strong>Remarks:</strong> ' + escapeHtml(t.remarks) + '</p>' : ''),
-    [
-      { label: 'Close', class: 'btn-secondary', onClick: closeModal },
-      { label: 'Edit', onClick: () => { closeModal(); openTransactionForm(id); } },
-      { label: 'Delete', class: 'btn-danger', onClick: async () => {
-        if (!confirm('Delete this transaction?')) return;
-        const lid = t.ledger_id;
-        await sb.from('transactions').delete().eq('id', id);
-        if (lid) await refreshLedgerBalance(lid);
-        await logActivity('Transaction Deleted', id);
-        closeModal();
-        if (currentView === 'ledgerDetail') renderLedgerDetail();
-        else if (currentView === 'transactions') renderTransactions();
-        else renderDashboard();
-        toast('Deleted', 'success');
-      }}
-    ]
-  );
+async function deleteCurrentTx() {
+  if (!confirm('व्यवहार हटवायचा?')) return;
+  const { error }=await sb.from('transactions').delete().eq('id',_currentTxId);
+  if (error) { toast('त्रुटी: '+error.message,'error'); return; }
+  await logActivity('व्यवहार हटवला', _currentTxId);
+  toast('व्यवहार हटवला ✓','success'); closeModal('modal-tx-detail'); loadTx();
 }
 
-async function renderReminders() {
-  const { data } = await sb.from('reminders').select('*').order('date', { ascending: true });
-  const pending = (data || []).filter(r => r.status === 'pending');
-  const done = (data || []).filter(r => r.status === 'completed');
-  $('remindersList').innerHTML = (pending.length ? '<div class="section-title">Pending</div>' + pending.map(reminderCard).join('') : '') + (done.length ? '<div class="section-title">Completed</div>' + done.map(r => '<div class="list-item" style="opacity:.7;" onclick="openReminderForm(\'' + r.id + '\')"><div class="list-avatar" style="background:linear-gradient(135deg,#10b981,#34d399);">✓</div><div class="list-body"><p class="list-title" style="text-decoration:line-through;">' + escapeHtml(r.title) + '</p><p class="list-sub">' + r.date + ' ' + (r.time || '') + '</p></div><span class="badge badge-success">done</span></div>').join('') : '') + (!pending.length && !done.length ? emptyHtml('No reminders', '🔔') : '');
+// =============================================
+// REMINDERS
+// =============================================
+async function loadReminders() {
+  const { data }=await sb.from('reminders').select('*').eq('status',reminderTab).order('reminder_date');
+  const el=document.getElementById('reminders-list');
+  if (!data?.length) { el.innerHTML=`<div class="empty"><div class="emoji">🔔</div><p>${reminderTab==='pending'?'बाकी रिमाइंडर नाहीत':'पूर्ण रिमाइंडर नाहीत'}</p></div>`; return; }
+  el.innerHTML=data.map(r=>`<div class="reminder-item">
+    <div class="reminder-check ${r.status==='completed'?'done':''}" onclick="toggleReminder('${r.id}','${r.status}')">✓</div>
+    <div class="reminder-info">
+      <div class="reminder-title">${r.title}</div>
+      <div class="reminder-sub">📅 ${r.reminder_date||'---'} ${r.reminder_time?'⏰ '+r.reminder_time:''}</div>
+      ${r.notes?`<div class="reminder-sub">${r.notes}</div>`:''}
+    </div>
+    <button class="btn btn-danger btn-sm" onclick="deleteReminder('${r.id}')">🗑️</button>
+  </div>`).join('');
 }
 
-function openReminderForm(id=null) {
-  const isEdit = !!id;
-  const load = async () => {
-    let r = { title:'', date: today(), time:'', notes:'', status:'pending' };
-    if (isEdit) { const { data } = await sb.from('reminders').select('*').eq('id', id).single(); if (data) r = data; }
-    openModal(isEdit ? 'Edit Reminder' : 'New Reminder',
-      '<div class="field"><label>Title</label><input id="f_title" value="' + escapeHtml(r.title) + '" /></div>' +
-      '<div class="field"><label>Date</label><input id="f_date" type="date" value="' + r.date + '" /></div>' +
-      '<div class="field"><label>Time</label><input id="f_time" type="time" value="' + (r.time||'') + '" /></div>' +
-      '<div class="field"><label>Notes</label><textarea id="f_notes">' + escapeHtml(r.notes||'') + '</textarea></div>' +
-      '<div class="field"><label>Status</label><select id="f_status"><option value="pending"' + (r.status==='pending'?' selected':'') + '>Pending</option><option value="completed"' + (r.status==='completed'?' selected':'') + '>Completed</option></select></div>',
-      [
-        { label: 'Cancel', class: 'btn-secondary', onClick: closeModal },
-        { label: isEdit ? 'Update' : 'Create', onClick: async () => {
-          const payload = { title: $('f_title').value.trim(), date: $('f_date').value, time: $('f_time').value, notes: $('f_notes').value.trim(), status: $('f_status').value, user_id: currentUser.id };
-          if (!payload.title) return toast('Title required', 'error');
-          if (isEdit) await sb.from('reminders').update(payload).eq('id', id);
-          else { payload.created_at = new Date().toISOString(); await sb.from('reminders').insert(payload); await logActivity('Reminder Created', payload.title); }
-          closeModal(); renderReminders(); toast('Saved', 'success');
-        }}
-      ]
-    );
-  };
-  load();
+function setReminderTab(el, tab) {
+  reminderTab=tab;
+  document.querySelectorAll('.page#page-reminders .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  loadReminders();
 }
 
-function subscribeChat() {
-  if (chatChannel) sb.removeChannel(chatChannel);
-  chatChannel = sb.channel('chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => { appendChatMessage(payload.new); }).subscribe();
+function openAddReminder() {
+  editingId.reminder=null;
+  document.getElementById('reminder-modal-title').textContent='नवीन रिमाइंडर';
+  document.getElementById('r-title').value=''; document.getElementById('r-date').value='';
+  document.getElementById('r-time').value=''; document.getElementById('r-notes').value='';
+  openModal('modal-reminder');
 }
 
-async function renderChat() {
-  const { data } = await sb.from('chat_messages').select('*').order('created_at', { ascending: true }).limit(100);
-  $('chatMessages').innerHTML = '';
-  (data || []).forEach(appendChatMessage);
-  scrollChatBottom();
+async function saveReminder() {
+  const data={title:v('r-title'),reminder_date:v('r-date')||null,reminder_time:v('r-time')||null,notes:v('r-notes'),status:'pending',created_by:currentUser.id};
+  if (!data.title) { toast('शीर्षक आवश्यक','error'); return; }
+  const { error }=await sb.from('reminders').insert([data]);
+  if (error) { toast('त्रुटी: '+error.message,'error'); return; }
+  await logActivity('रिमाइंडर तयार', data.title);
+  toast('रिमाइंडर जतन ✓','success'); closeModal('modal-reminder'); loadReminders();
 }
 
-function appendChatMessage(m) {
-  const isMe = m.sender_id === currentUser.id;
-  const time = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const div = document.createElement('div');
-  div.className = 'chat-msg ' + (isMe ? 'me' : 'other');
-  div.innerHTML = (!isMe ? '<div class="chat-meta">' + escapeHtml(m.sender_name) + '</div>' : '') + '<div class="chat-bubble">' + escapeHtml(m.message) + '</div><div class="chat-meta">' + time + '</div>';
-  $('chatMessages').appendChild(div);
+async function toggleReminder(id, status) {
+  const newStatus=status==='pending'?'completed':'pending';
+  await sb.from('reminders').update({status:newStatus}).eq('id',id);
+  loadReminders();
 }
 
-function scrollChatBottom() { setTimeout(() => { const el = $('chatMessages'); if (el) el.scrollTop = el.scrollHeight; }, 100); }
+async function deleteReminder(id) {
+  await sb.from('reminders').delete().eq('id',id);
+  toast('रिमाइंडर हटवला ✓','success'); loadReminders();
+}
+
+// =============================================
+// CHAT
+// =============================================
+let chatMessages=[];
+function setupChat() {
+  loadChatMessages();
+  chatChannel = sb.channel('chat').on('postgres_changes',{event:'INSERT',schema:'public',table:'chat_messages'},msg=>{
+    chatMessages.push(msg.new);
+    renderChat();
+    if (currentPage!=='chat') { document.getElementById('chat-badge').style.display='block'; }
+    scrollChatBottom();
+  }).subscribe();
+}
+
+async function loadChatMessages() {
+  const { data }=await sb.from('chat_messages').select('*').order('created_at').limit(100);
+  chatMessages=data||[];
+  renderChat(); scrollChatBottom();
+}
+
+function renderChat() {
+  const el=document.getElementById('chat-messages');
+  if (!chatMessages.length) { el.innerHTML='<div class="empty"><div class="emoji">💬</div><p>अजून कोणताही संदेश नाही</p></div>'; return; }
+  el.innerHTML=chatMessages.map(m=>{
+    const isMe=m.sender_id===currentUser?.id;
+    return `<div class="chat-bubble-wrap ${isMe?'me':'them'}">
+      ${!isMe?`<div class="chat-sender">${m.sender_name||'Unknown'}</div>`:''}
+      <div class="chat-bubble">${escHtml(m.message)}</div>
+      <div class="chat-time">${fmtTime(m.created_at)}</div>
+    </div>`;
+  }).join('');
+}
 
 async function sendChat() {
-  const input = $('chatInput');
-  const msg = input.value.trim();
-  if (!msg) return;
-  input.value = '';
-  const payload = { sender_id: currentUser.id, sender_name: currentProfile.name || currentUser.email, message: msg, created_at: new Date().toISOString() };
-  await sb.from('chat_messages').insert(payload);
-  await logActivity('Chat Message', msg.slice(0, 40));
-  scrollChatBottom();
+  const input=document.getElementById('chat-input');
+  const msg=input.value.trim(); if (!msg) return;
+  input.value='';
+  const { error }=await sb.from('chat_messages').insert([{sender_id:currentUser.id,sender_name:currentProfile?.full_name||currentUser.email,message:msg}]);
+  if (error) { toast('संदेश पाठवला नाही','error'); input.value=msg; }
+  document.getElementById('chat-badge').style.display='none';
 }
 
-async function renderActivity() {
-  const { data } = await sb.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(200);
-  $('activityList').innerHTML = (data && data.length) ? data.map(activityCard).join('') : emptyHtml('No activities', '📋');
+function scrollChatBottom() {
+  const el=document.getElementById('chat-messages');
+  if (el) setTimeout(()=>{el.scrollTop=el.scrollHeight},100);
 }
 
-async function renderStaff() {
-  if (currentProfile.role !== 'admin') { $('staffList').innerHTML = emptyHtml('Admin only', '🔒'); return; }
-  const { data } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
-  $('staffList').innerHTML = (data || []).map(p => '<div class="list-item"><div class="list-avatar">' + initials(p.name) + '</div><div class="list-body"><p class="list-title">' + escapeHtml(p.name) + '</p><p class="list-sub">' + escapeHtml(p.email) + ' • ' + escapeHtml(p.phone||'-') + '</p></div><span class="badge ' + (p.role==='admin'?'badge-info':'badge-success') + '">' + p.role + '</span>' + (p.id !== currentUser.id ? '<button class="icon-btn" onclick="openStaffMenu(\'' + p.id + '\')">⋮</button>' : '') + '</div>').join('') || emptyHtml('No staff', '👥');
+// =============================================
+// ADMIN - STAFF
+// =============================================
+async function loadStaff() {
+  if (currentProfile?.role!=='admin') return;
+  const { data }=await sb.from('profiles').select('*').neq('id',currentUser.id).order('full_name');
+  const el=document.getElementById('staff-list');
+  if (!data?.length) { el.innerHTML='<div class="empty"><div class="emoji">👥</div><p>स्टाफ नाही</p></div>'; return; }
+  el.innerHTML=data.map(p=>`<div class="list-item">
+    <div class="list-avatar" style="background:${p.role==='admin'?'linear-gradient(135deg,var(--accent),#9c35e0)':'linear-gradient(135deg,var(--accent2),#2e7d5e)'}">👤</div>
+    <div class="list-info">
+      <div class="list-name">${p.full_name} <span class="badge badge-${p.role}">${p.role==='admin'?'अॅडमिन':'स्टाफ'}</span></div>
+      <div class="list-sub">📞 ${p.phone||'-'}</div>
+    </div>
+    <button class="btn btn-danger btn-sm" onclick="deleteStaff('${p.id}')">🗑️</button>
+  </div>`).join('');
 }
 
-function openStaffForm(id=null) {
-  const isEdit = !!id;
-  const load = async () => {
-    let p = { name:'', email:'', phone:'', role:'staff' };
-    if (isEdit) { const { data } = await sb.from('profiles').select('*').eq('id', id).single(); if (data) p = data; }
-    openModal(isEdit ? 'Edit Staff' : 'New Staff', (!isEdit ? '<div class="field"><label>Email</label><input id="f_email" type="email" value="' + escapeHtml(p.email) + '" /></div><div class="field"><label>Password</label><input id="f_password" type="password" placeholder="Min 6 chars" /></div>' : '') + '<div class="field"><label>Full Name</label><input id="f_name" value="' + escapeHtml(p.name) + '" /></div><div class="field"><label>Phone</label><input id="f_phone" value="' + escapeHtml(p.phone||'') + '" /></div><div class="field"><label>Role</label><select id="f_role"><option value="staff"' + (p.role==='staff'?' selected':'') + '>Staff</option><option value="admin"' + (p.role==='admin'?' selected':'') + '>Admin</option></select></div>',
-      [
-        { label: 'Cancel', class: 'btn-secondary', onClick: closeModal },
-        { label: isEdit ? 'Update' : 'Create', onClick: async () => {
-          if (isEdit) {
-            await sb.from('profiles').update({ name: $('f_name').value.trim(), phone: $('f_phone').value.trim(), role: $('f_role').value }).eq('id', id);
-            toast('Updated', 'success');
-          } else {
-            const email = $('f_email').value.trim();
-            const password = $('f_password').value;
-            if (!email || !password) return toast('Email & password required', 'error');
-            const { data: auth, error } = await sb.auth.admin.createUser({ email, password, email_confirm: true });
-            if (error) return toast(error.message, 'error');
-            await sb.from('profiles').insert({ id: auth.user.id, name: $('f_name').value.trim(), email, phone: $('f_phone').value.trim(), role: $('f_role').value, created_at: new Date().toISOString() });
-            await logActivity('Staff Created', email);
-            toast('Staff created', 'success');
-          }
-          closeModal(); renderStaff();
-        }}
-      ]
-    );
-  };
-  load();
-}
+function openAddStaff() { ['staff-name','staff-email','staff-pass','staff-phone'].forEach(id=>document.getElementById(id).value=''); document.getElementById('staff-role').value='staff'; openModal('modal-staff'); }
 
-function openStaffMenu(id) {
-  openModal('Staff Options', '<button class="btn" style="margin-bottom:10px;" onclick="closeModal();openStaffForm(\'' + id + '\')">✏️ Edit</button><button class="btn btn-danger" onclick="deleteStaff(\'' + id + '\')">🗑️ Delete</button>', [{ label: 'Close', class: 'btn-secondary', onClick: closeModal }]);
+async function saveStaff() {
+  const name=v('staff-name'),email=v('staff-email'),pass=v('staff-pass'),phone=v('staff-phone'),role=v('staff-role');
+  if (!name||!email||!pass) { toast('नाव, ईमेल आणि पासवर्ड आवश्यक','error'); return; }
+  if (pass.length<6) { toast('पासवर्ड कमीत कमी 6 अक्षरे हवा','error'); return; }
+  const { data, error }=await sb.auth.admin.createUser({email,password:pass,email_confirm:true});
+  if (error) { toast('त्रुटी: '+error.message,'error'); return; }
+  await sb.from('profiles').insert([{id:data.user.id,full_name:name,role,phone}]);
+  await logActivity('स्टाफ जोडला', name);
+  toast('स्टाफ जोडला ✓','success'); closeModal('modal-staff'); loadStaff();
 }
 
 async function deleteStaff(id) {
-  if (!confirm('Delete this staff member?')) return;
-  await sb.from('profiles').delete().eq('id', id);
-  closeModal(); renderStaff(); toast('Deleted', 'success');
+  if (!confirm('स्टाफ हटवायचा?')) return;
+  await sb.from('profiles').delete().eq('id',id);
+  await logActivity('स्टाफ हटवला', id);
+  toast('स्टाफ हटवला ✓','success'); loadStaff();
+}
+
+// =============================================
+// ACTIVITY LOG
+// =============================================
+async function loadActivityLog() {
+  const { data }=await sb.from('activity_log').select('*').order('created_at',{ascending:false}).limit(100);
+  const el=document.getElementById('activity-list');
+  if (!data?.length) { el.innerHTML='<div class="empty"><div class="emoji">📋</div><p>कोणतीही क्रिया नाही</p></div>'; return; }
+  el.innerHTML=data.map(a=>logItem(a)).join('');
+}
+
+function setAdminTab(el, tab) {
+  adminTab=tab;
+  document.querySelectorAll('#page-admin .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('admin-staff-section').style.display=tab==='staff'?'block':'none';
+  document.getElementById('admin-log-section').style.display=tab==='log'?'block':'none';
+  if (tab==='log') loadActivityLog();
+}
+
+// =============================================
+// SEARCH
+// =============================================
+let searchCategoryFilter='all';
+function openSearch() { goPage('search'); document.getElementById('global-search').focus(); }
+function setSearchCat(el,cat) {
+  searchCategoryFilter=cat;
+  document.querySelectorAll('#page-search .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  doGlobalSearch();
 }
 
 async function doGlobalSearch() {
-  const q = $('globalSearch').value.trim().toLowerCase();
-  if (!q) { $('searchResults').innerHTML = ''; return; }
-  const [cos, sis, les, txs, ps] = await Promise.all([
-    sb.from('companies').select('id,name').ilike('name', '%' + q + '%').limit(10),
-    sb.from('sites').select('id,name,company_id').ilike('name', '%' + q + '%').limit(10),
-    sb.from('ledgers').select('id,name,company_id').ilike('name', '%' + q + '%').limit(10),
-    sb.from('transactions').select('id,description,type,amount,date').ilike('description', '%' + q + '%').limit(10),
-    sb.from('profiles').select('id,name,email').ilike('name', '%' + q + '%').limit(10)
-  ]);
-  let html = '';
-  if (cos.data?.length) html += '<div class="section-title">Companies</div>' + cos.data.map(c => '<div class="list-item" onclick="openCompany(\'' + c.id + '\')"><div class="list-avatar">' + initials(c.name) + '</div><div class="list-body"><p class="list-title">' + escapeHtml(c.name) + '</p></div></div>').join('');
-  if (sis.data?.length) html += '<div class="section-title">Sites</div>' + sis.data.map(s => '<div class="list-item" onclick="openCompany(\'' + s.company_id + '\')"><div class="list-avatar" style="background:linear-gradient(135deg,#10b981,#34d399);">📍</div><div class="list-body"><p class="list-title">' + escapeHtml(s.name) + '</p></div></div>').join('');
-  if (les.data?.length) html += '<div class="section-title">Ledgers</div>' + les.data.map(l => '<div class="list-item" onclick="openLedger(\'' + l.id + '\')"><div class="list-avatar" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);">📒</div><div class="list-body"><p class="list-title">' + escapeHtml(l.name) + '</p></div></div>').join('');
-  if (txs.data?.length) html += '<div class="section-title">Transactions</div>' + txs.data.map(t => '<div class="list-item" onclick="openTransactionDetail(\'' + t.id + '\')"><div class="list-avatar">💰</div><div class="list-body"><p class="list-title">' + escapeHtml(t.description||t.type) + '</p><p class="list-sub">' + t.date + '</p></div><div class="list-amount">' + fmt(t.amount) + '</div></div>').join('');
-  if (ps.data?.length) html += '<div class="section-title">People</div>' + ps.data.map(p => '<div class="list-item"><div class="list-avatar">' + initials(p.name) + '</div><div class="list-body"><p class="list-title">' + escapeHtml(p.name) + '</p><p class="list-sub">' + escapeHtml(p.email) + '</p></div></div>').join('');
-  $('searchResults').innerHTML = html || emptyHtml('No results', '🔍');
+  const q=document.getElementById('global-search').value.trim();
+  const el=document.getElementById('search-results');
+  if (!q) { el.innerHTML='<div class="empty"><div class="emoji">🔍</div><p>शब्द टाइप करा</p></div>'; return; }
+  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">शोधत आहे...</div>';
+  let html='';
+  const cat=searchCategoryFilter;
+  const run=async(table,col,label,icon)=>{
+    const { data }=await sb.from(table).select('*').ilike(col,'%'+q+'%').limit(10);
+    if (data?.length) { html+=`<div class="section-hdr" style="margin-top:8px"><h3>${icon} ${label}</h3></div>`+data.map(r=>`<div class="list-item"><div class="list-avatar">${icon}</div><div class="list-info"><div class="list-name">${r[col]}</div></div></div>`).join(''); }
+  };
+  if (cat==='all'||cat==='companies') await run('companies','name','कंपन्या','🏢');
+  if (cat==='all'||cat==='sites') await run('sites','name','साइट','🏗️');
+  if (cat==='all'||cat==='ledgers') await run('ledgers','person_name','लेजर','📒');
+  if (cat==='all'||cat==='transactions') {
+    const { data }=await sb.from('transactions').select('*').or(`description.ilike.%${q}%,remarks.ilike.%${q}%`).limit(10);
+    if (data?.length) { html+='<div class="section-hdr" style="margin-top:8px"><h3>💸 व्यवहार</h3></div>'+data.map(t=>txItem(t)).join(''); }
+  }
+  el.innerHTML = html||'<div class="empty"><div class="emoji">😕</div><p>काही सापडले नाही</p></div>';
 }
 
-sb.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_IN' && session?.user && !currentUser) afterLogin(session.user);
-  else if (event === 'SIGNED_OUT') { currentUser = null; $('app').style.display = 'none'; $('loginScreen').style.display = 'flex'; }
+// =============================================
+// POPULATE SELECTS
+// =============================================
+async function populateCompanySelects() {
+  let q=sb.from('companies').select('id,name').order('name');
+  if (currentProfile?.role!=='admin') {
+    const { data:access }=await sb.from('staff_company_access').select('company_id').eq('staff_id',currentUser.id);
+    const ids=(access||[]).map(a=>a.company_id);
+    if (ids.length) q=q.in('id',ids); else { allCompanies=[]; setCompanySelects([]); return; }
+  }
+  const { data }=await q; allCompanies=data||[];
+  setCompanySelects(data||[]);
+}
+
+function setCompanySelects(list) {
+  const opts='<option value="">-- कंपनी निवडा --</option>'+list.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  ['site-company-filter','ledger-company-filter','s-company','l-company','tx-company'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.innerHTML=opts;
+  });
+}
+
+// =============================================
+// SETTINGS
+// =============================================
+let isDark=true;
+function toggleDark() {
+  isDark=!isDark;
+  document.body.classList.toggle('light',!isDark);
+  document.getElementById('dark-toggle').classList.toggle('on',isDark);
+  localStorage.setItem('theme',isDark?'dark':'light');
+}
+
+// =============================================
+// ACTIVITY LOG HELPER
+// =============================================
+async function logActivity(action, details='') {
+  await sb.from('activity_log').insert([{user_id:currentUser?.id,user_name:currentProfile?.full_name||currentUser?.email,action,details}]);
+}
+
+// =============================================
+// MODAL HELPERS
+// =============================================
+function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click',e=>{ if(e.target===m) closeModal(m.id); });
 });
 
-$('pageTitle').addEventListener('click', () => { openView('settings'); });
+// =============================================
+// UTILITY
+// =============================================
+function v(id) { return document.getElementById(id)?.value?.trim()||''; }
+function fmt(n) { return Number(n||0).toLocaleString('en-IN'); }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtTime(ts) { if(!ts) return ''; const d=new Date(ts); return d.toLocaleTimeString('mr-IN',{hour:'2-digit',minute:'2-digit'}); }
+function timeAgo(ts) {
+  if (!ts) return '';
+  const diff=(Date.now()-new Date(ts))/1000;
+  if (diff<60) return 'आत्ता';
+  if (diff<3600) return Math.floor(diff/60)+' मिनिटांपूर्वी';
+  if (diff<86400) return Math.floor(diff/3600)+' तासांपूर्वी';
+  return Math.floor(diff/86400)+' दिवसांपूर्वी';
+}
 
-const settingsView = $('view-settings');
-const adminMenu = document.createElement('div');
-adminMenu.innerHTML = '<div class="card" id="adminMenuCard" style="display:none;"><p class="card-title">Admin Tools</p><button class="btn btn-secondary" style="margin-bottom:8px;" onclick="openView(\'staff\')">👥 Manage Staff</button><button class="btn btn-secondary" onclick="openView(\'activity\')">📋 Activity Log</button></div>';
-settingsView.insertBefore(adminMenu.firstElementChild, settingsView.children[2]);
+function toast(msg, type='') {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='show '+(type||'');
+  setTimeout(()=>el.className='',3000);
+}
 
-const _origInit = initApp;
-initApp = async function() {
-  await _origInit();
-  if (currentProfile.role === 'admin') $('adminMenuCard').style.display = 'block';
-};
+// =============================================
+// THEME INIT
+// =============================================
+if (localStorage.getItem('theme')==='light') { isDark=false; document.body.classList.add('light'); document.getElementById('dark-toggle')?.classList.remove('on'); }
 
-(async () => {
-  const { data } = await sb.auth.getSession();
-  if (data.session?.user) await afterLogin(data.session.user);
-})();
+// =============================================
+// START
+// =============================================
+init();
 </script>
 </body>
 </html>
