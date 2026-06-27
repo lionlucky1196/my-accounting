@@ -1258,11 +1258,31 @@ async function saveStaff() {
   const name=v('staff-name'),email=v('staff-email'),pass=v('staff-pass'),phone=v('staff-phone'),role=v('staff-role');
   if (!name||!email||!pass) { toast('नाव, ईमेल आणि पासवर्ड आवश्यक','error'); return; }
   if (pass.length<6) { toast('पासवर्ड कमीत कमी 6 अक्षरे हवा','error'); return; }
-  const { data, error }=await sb.auth.admin.createUser({email,password:pass,email_confirm:true});
+
+  // Save current admin session
+  const { data: adminSession } = await sb.auth.getSession();
+
+  // Sign up new staff user
+  const { data, error } = await sb.auth.signUp({ email, password: pass });
   if (error) { toast('त्रुटी: '+error.message,'error'); return; }
-  await sb.from('profiles').insert([{id:data.user.id,full_name:name,role,phone}]);
+
+  const newUserId = data.user?.id;
+  if (!newUserId) { toast('यूजर तयार झाला नाही','error'); return; }
+
+  // Insert profile for new staff
+  await sb.from('profiles').insert([{id:newUserId, full_name:name, role, phone}]);
+
+  // Restore admin session
+  if (adminSession?.session) {
+    await sb.auth.setSession({
+      access_token: adminSession.session.access_token,
+      refresh_token: adminSession.session.refresh_token
+    });
+  }
+
   await logActivity('स्टाफ जोडला', name);
-  toast('स्टाफ जोडला ✓','success'); closeModal('modal-staff'); loadStaff();
+  toast('स्टाफ जोडला ✓ — त्याला email confirm करायला सांग','success');
+  closeModal('modal-staff'); loadStaff();
 }
 
 async function deleteStaff(id) {
