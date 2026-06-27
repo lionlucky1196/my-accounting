@@ -2,654 +2,52 @@
 <html lang="mr">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover"/>
-<meta name="theme-color" content="#667eea"/>
-<title>Hisaab Pro - व्यावसायिक हिशेब</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Hisaab Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0a0e1a;--bg2:#111827;--bg3:#1f2937;--card:#1e293b;--card2:#334155;
-  --accent:#667eea;--accent2:#764ba2;--accent-dim:rgba(102,126,234,.15);
-  --green:#10b981;--green-dim:rgba(16,185,129,.12);
-  --red:#ef4444;--red-dim:rgba(239,68,68,.12);
-  --yellow:#f59e0b;--yellow-dim:rgba(245,158,11,.12);
-  --purple:#8b5cf6;--purple-dim:rgba(139,92,246,.12);
-  --orange:#f97316;--orange-dim:rgba(249,115,22,.12);
-  --text:#f1f5f9;--text2:#94a3b8;--text3:#cbd5e1;
-  --border:#334155;--border2:#475569;
-  --radius:16px;--radius-sm:12px;
-  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  --gradient:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
-  --glass:rgba(255,255,255,.05);
-  --glass-border:rgba(255,255,255,.1);
-}
-body{
-  font-family:var(--font);background:var(--bg);color:var(--text);
-  min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent;
-}
-button{cursor:pointer;border:none;outline:none;font-family:inherit}
-input,select,textarea{font-family:inherit;outline:none;border:none}
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
-
-/* LOADER */
-#loader{
-  position:fixed;inset:0;background:var(--gradient);display:flex;flex-direction:column;
-  align-items:center;justify-content:center;z-index:9999;gap:24px;
-}
-.loader-brand{display:flex;align-items:center;gap:12px}
-.loader-icon{
-  width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.2);
-  display:flex;align-items:center;justify-content:center;font-size:1.6rem;
-}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#0a0e1a;color:#f1f5f9;min-height:100vh}
+#loader{position:fixed;inset:0;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:20px}
+.loader-icon{width:60px;height:60px;background:rgba(255,255,255,.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2rem;animation:pulse 1.5s infinite}
 .loader-name{font-size:1.8rem;font-weight:800;color:#fff}
-.loader-ring{
-  width:40px;height:40px;border:3px solid rgba(255,255,255,.2);
-  border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;
-}
+.loader-ring{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* AUTH */
-#auth{display:none;position:fixed;inset:0;background:var(--bg);overflow-y:auto;padding:24px}
-.auth-wrap{max-width:400px;margin:60px auto 0}
-.auth-brand{text-align:center;margin-bottom:36px}
-.auth-brand .icon{
-  width:72px;height:72px;border-radius:20px;background:var(--gradient);
-  margin:0 auto 16px;display:flex;align-items:center;justify-content:center;
-  font-size:2rem;
-}
-.auth-brand h1{font-size:1.7rem;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.auth-brand p{color:var(--text2);font-size:.9rem;margin-top:6px}
-.auth-box{
-  background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--glass-border);
-  border-radius:20px;padding:28px;
-}
-.auth-box h2{font-size:1.2rem;font-weight:700;margin-bottom:24px;text-align:center}
-.field{margin-bottom:16px}
-.field label{display:block;font-size:.75rem;color:var(--text2);margin-bottom:8px;font-weight:600;text-transform:uppercase}
-.field input,.field select,.field textarea{
-  width:100%;background:var(--bg3);border:2px solid var(--border);
-  border-radius:var(--radius-sm);padding:13px 16px;color:var(--text);font-size:.95rem;
-}
-.field input:focus,.field select:focus{border-color:var(--accent)}
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  padding:12px 20px;border-radius:var(--radius-sm);font-size:.9rem;font-weight:700;
-  transition:all .2s;
-}
-.btn:active{transform:scale(.96)}
-.btn-primary{background:var(--gradient);color:#fff}
-.btn-success{background:var(--green);color:#fff}
-.btn-danger{background:var(--red);color:#fff}
-.btn-warn{background:var(--yellow);color:#000}
-.btn-ghost{background:var(--glass);color:var(--text);border:1.5px solid var(--border)}
-.btn-full{width:100%}
-.btn-sm{padding:8px 14px;font-size:.8rem}
-.btn-xs{padding:6px 10px;font-size:.75rem}
-.auth-err{color:var(--red);font-size:.85rem;margin-top:12px;text-align:center}
-
-/* MAIN */
-#app{display:none;flex-direction:column;min-height:100vh;padding-bottom:72px}
-
-/* TOPBAR */
-.topbar{
-  position:sticky;top:0;z-index:100;background:var(--glass);
-  backdrop-filter:blur(20px);border-bottom:1px solid var(--glass-border);
-  padding:12px 16px;display:flex;align-items:center;justify-content:space-between;
-}
-.topbar-title{font-size:1.1rem;font-weight:800}
-.icon-btn{
-  width:38px;height:38px;border-radius:12px;background:var(--glass);
-  border:1px solid var(--glass-border);display:flex;align-items:center;
-  justify-content:center;font-size:1.1rem;cursor:pointer;transition:.2s;
-}
-.icon-btn:hover{background:var(--accent);color:#fff}
-
-/* BOTTOM NAV */
-.bnav{
-  position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--glass);
-  backdrop-filter:blur(20px);border-top:1px solid var(--glass-border);
-  display:flex;height:68px;padding:0 8px;
-}
-.nitem{
-  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:4px;color:var(--text2);font-size:.62rem;font-weight:700;cursor:pointer;
-}
-.nitem.active{color:var(--accent)}
-.nitem .ni{font-size:1.3rem}
-.nbadge{
-  position:absolute;top:4px;right:calc(50% - 16px);min-width:16px;height:16px;
-  background:var(--red);border-radius:8px;border:2px solid var(--bg);
-  font-size:.65rem;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;
-}
-
-/* PAGES */
-.page{display:none;padding:16px}
-.page.active{display:block}
-
-/* CARDS */
-.card{
-  background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--glass-border);
-  border-radius:var(--radius);padding:18px;margin-bottom:14px;
-}
-
-/* STATS */
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
-.stat{
-  background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--glass-border);
-  border-radius:var(--radius);padding:16px;position:relative;
-}
-.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius) var(--radius) 0 0}
-.stat-in::before{background:linear-gradient(90deg,var(--green),#34d399)}
-.stat-ex::before{background:linear-gradient(90deg,var(--red),#f87171)}
-.stat-bal{grid-column:1/-1}
-.stat-bal::before{background:var(--gradient)}
-.stat-lbl{font-size:.72rem;color:var(--text2);font-weight:700;text-transform:uppercase;margin-bottom:8px}
-.stat-val{font-size:1.5rem;font-weight:900}
-.c-green{color:var(--green)}
-.c-red{color:var(--red)}
-.c-accent{color:var(--accent)}
-
-/* SECTION */
-.shdr{display:flex;align-items:center;justify-content:space-between;margin:20px 0 12px}
-.shdr h3{font-size:.85rem;font-weight:800;text-transform:uppercase;color:var(--text3)}
-
-/* TX ITEM */
-.txi{
-  display:flex;align-items:center;gap:14px;padding:14px;
-  background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--glass-border);
-  border-radius:var(--radius-sm);margin-bottom:10px;cursor:pointer;transition:.2s;
-}
-.txi:hover{transform:translateX(4px)}
-.tx-dot{
-  width:44px;height:44px;border-radius:12px;display:flex;align-items:center;
-  justify-content:center;font-size:1.2rem;flex-shrink:0;
-}
-.dot-income{background:var(--green-dim);color:var(--green)}
-.dot-expense{background:var(--red-dim);color:var(--red)}
-.dot-advance{background:var(--yellow-dim);color:var(--yellow)}
-.dot-receive{background:var(--accent-dim);color:var(--accent)}
-.dot-payment{background:var(--orange-dim);color:var(--orange)}
-.tx-info{flex:1;min-width:0}
-.tx-name{font-size:.92rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tx-sub{font-size:.75rem;color:var(--text2);margin-top:4px}
-.tx-amt{font-size:1.05rem;font-weight:800;flex-shrink:0}
-
-/* LIST ITEM */
-.li{
-  display:flex;align-items:center;gap:14px;padding:15px;
-  background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--glass-border);
-  border-radius:var(--radius-sm);margin-bottom:10px;cursor:pointer;transition:.2s;
-}
-.li:hover{transform:translateX(4px)}
-.li-av{
-  width:46px;height:46px;border-radius:13px;display:flex;align-items:center;
-  justify-content:center;font-size:1.2rem;flex-shrink:0;
-}
-.li-info{flex:1;min-width:0}
-.li-name{font-size:.95rem;font-weight:700}
-.li-sub{font-size:.75rem;color:var(--text2);margin-top:4px}
-.li-right{flex-shrink:0;display:flex;gap:8px;align-items:center}
-
-/* MODAL */
-.mo{
-  position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);
-  z-index:500;display:none;align-items:flex-end;justify-content:center;
-}
-.mo.open{display:flex}
-.modal{
-  background:var(--bg2);border-radius:24px 24px 0 0;width:100%;max-width:500px;
-  max-height:92vh;overflow-y:auto;padding:10px 18px 40px;
-}
-.mo-drag{width:40px;height:5px;background:var(--border2);border-radius:5px;margin:14px auto 20px}
-.mo-title{font-size:1.15rem;font-weight:800;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
-.mo-acts{display:flex;gap:10px;margin-top:24px}
-.mo-acts .btn{flex:1}
-
-/* BADGE */
-.badge{
-  display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;
-  font-size:.7rem;font-weight:700;
-}
-.bg-income{background:var(--green-dim);color:var(--green)}
-.bg-expense{background:var(--red-dim);color:var(--red)}
-.bg-advance{background:var(--yellow-dim);color:var(--yellow)}
-.bg-receive{background:var(--accent-dim);color:var(--accent)}
-.bg-payment{background:var(--orange-dim);color:var(--orange)}
-.bg-admin{background:var(--accent-dim);color:var(--accent)}
-.bg-staff{background:rgba(148,163,184,.12);color:var(--text2)}
-
-/* CHIPS */
-.chips{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto}
-.chip{
-  padding:8px 16px;border-radius:24px;font-size:.8rem;font-weight:700;
-  background:var(--glass);color:var(--text2);white-space:nowrap;cursor:pointer;
-  border:1.5px solid var(--glass-border);
-}
-.chip.active{background:var(--gradient);color:#fff;border-color:transparent}
-
-/* SEARCH */
-.searchbar{
-  display:flex;align-items:center;gap:12px;background:var(--glass);
-  border:2px solid var(--glass-border);border-radius:var(--radius-sm);
-  padding:12px 16px;margin-bottom:16px;
-}
-.searchbar input{flex:1;background:transparent;color:var(--text);font-size:.95rem}
-
-/* TABS */
-.tabs{display:flex;gap:0;margin-bottom:18px;background:var(--glass);border-radius:var(--radius-sm);padding:4px;border:1px solid var(--glass-border)}
-.tab{
-  flex:1;padding:10px;border-radius:var(--radius-sm);font-size:.85rem;font-weight:700;
-  text-align:center;cursor:pointer;color:var(--text2);
-}
-.tab.active{background:var(--gradient);color:#fff}
-
-/* DETAIL ROW */
-.dr{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border)}
-.dr:last-child{border:none}
-.dr-lbl{font-size:.78rem;color:var(--text2);font-weight:700;text-transform:uppercase}
-.dr-val{font-size:.9rem;font-weight:700;text-align:right}
-
-/* SETTINGS */
-.set-sec{margin-bottom:24px}
-.set-sec h3{font-size:.75rem;color:var(--text2);margin-bottom:12px;text-transform:uppercase}
-.set-item{
-  display:flex;align-items:center;justify-content:space-between;padding:16px;
-  background:var(--glass);border:1px solid var(--glass-border);
-  border-radius:var(--radius-sm);margin-bottom:10px;cursor:pointer;
-}
-.set-item-l{display:flex;align-items:center;gap:14px}
-.set-ico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
-.set-lbl{font-size:.95rem;font-weight:700}
-.set-sub{font-size:.75rem;color:var(--text2);margin-top:3px}
-
-/* REMINDER */
-.rem-item{
-  display:flex;align-items:flex-start;gap:14px;padding:15px;
-  background:var(--glass);border:1px solid var(--glass-border);
-  border-radius:var(--radius-sm);margin-bottom:10px;
-}
-.rem-check{
-  width:26px;height:26px;border-radius:8px;border:2px solid var(--border2);
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;
-}
-.rem-check.done{background:var(--green);border-color:var(--green);color:#fff}
-.rem-info{flex:1}
-.rem-title{font-size:.95rem;font-weight:700}
-.rem-sub{font-size:.75rem;color:var(--text2);margin-top:4px}
-
-/* CHAT */
-.chat-tabs{display:flex;gap:8px;margin-bottom:16px}
-.chat-tab{flex:1;padding:10px;border-radius:var(--radius-sm);background:var(--glass);border:1px solid var(--glass-border);text-align:center;font-weight:700;cursor:pointer}
-.chat-tab.active{background:var(--gradient);color:#fff}
-.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 220px)}
-.chat-msgs{flex:1;overflow-y:auto;padding:6px 0;display:flex;flex-direction:column;gap:8px}
-.cb-wrap{display:flex;flex-direction:column;max-width:80%;position:relative}
-.cb-wrap.me{align-self:flex-end;align-items:flex-end}
-.cb-wrap.them{align-self:flex-start;align-items:flex-start}
-.cb-sender{font-size:.7rem;color:var(--text2);margin-bottom:4px;padding:0 8px;font-weight:700}
-.cb{
-  padding:12px 16px;border-radius:18px;font-size:.9rem;line-height:1.5;word-break:break-word;
-}
-.cb-wrap.me .cb{background:var(--gradient);color:#fff;border-radius:18px 18px 4px 18px}
-.cb-wrap.them .cb{background:var(--glass);border:1px solid var(--glass-border);border-radius:18px 18px 18px 4px}
-.cb-time{font-size:.68rem;color:var(--text2);padding:0 8px;margin-top:4px}
-.cb-actions{position:absolute;top:-8px;right:8px;display:flex;gap:4px;opacity:0;transition:opacity .2s}
-.cb-wrap:hover .cb-actions{opacity:1}
-.cb-action{width:24px;height:24px;border-radius:6px;background:var(--bg3);border:none;color:var(--text);font-size:.7rem;cursor:pointer}
-.chat-bar{display:flex;gap:12px;padding-top:14px;border-top:1px solid var(--border);margin-top:10px}
-.chat-bar input{
-  flex:1;background:var(--glass);border:2px solid var(--glass-border);
-  border-radius:28px;padding:13px 18px;color:var(--text);font-size:.9rem;
-}
-.chat-send{
-  width:48px;height:48px;border-radius:50%;background:var(--gradient);color:#fff;
-  display:flex;align-items:center;justify-content:center;font-size:1.1rem;
-}
-
-/* LOG */
-.log-item{
-  display:flex;gap:14px;padding:13px;background:var(--glass);
-  border:1px solid var(--glass-border);border-radius:var(--radius-sm);margin-bottom:8px;
-}
-.log-dot{
-  width:38px;height:38px;border-radius:50%;background:var(--gradient);
-  display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;
-}
-.log-act{font-size:.88rem;font-weight:700}
-.log-who{font-size:.75rem;color:var(--text2);margin-top:3px}
-.log-t{font-size:.7rem;color:var(--text2);margin-top:5px}
-
-/* EMPTY */
-.empty{text-align:center;padding:48px 24px;color:var(--text2)}
-.empty .ej{font-size:3rem;margin-bottom:14px}
-
-/* LEDGER BALANCE */
-.lbal-card{
-  background:var(--gradient);border-radius:var(--radius);padding:24px;
-  margin-bottom:16px;text-align:center;
-}
-.lbal-card .lbl{font-size:.78rem;color:rgba(255,255,255,.8);font-weight:700;text-transform:uppercase}
-.lbal-card .val{font-size:2.2rem;font-weight:900;margin-top:6px;color:#fff}
-.lbal-card .name{font-size:.85rem;color:rgba(255,255,255,.9);margin-top:8px}
-
-/* SITE CARD */
-.site-card{
-  background:var(--glass);border:1px solid var(--glass-border);
-  border-radius:var(--radius);padding:16px 18px;margin-bottom:12px;cursor:pointer;
-  transition:.2s;display:flex;align-items:center;gap:16px;
-}
-.site-card:hover{transform:translateY(-3px)}
-.site-ico{
-  width:52px;height:52px;border-radius:14px;background:var(--gradient);
-  display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;
-}
-.site-info{flex:1;min-width:0}
-.site-name{font-size:.98rem;font-weight:800}
-.site-sub{font-size:.75rem;color:var(--text2);margin-top:4px}
-.site-stat{text-align:right;flex-shrink:0}
-.site-stat .sv{font-size:1.1rem;font-weight:800}
-.site-stat .sl{font-size:.7rem;color:var(--text2);margin-top:3px}
-
-/* FAB */
-.fab{
-  position:fixed;bottom:84px;right:18px;width:58px;height:58px;border-radius:50%;
-  background:var(--gradient);color:#fff;font-size:1.7rem;display:flex;
-  align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(102,126,234,.5);
-  z-index:90;
-}
-
-/* TOAST */
-#toast{
-  position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(20px);
-  background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--glass-border);
-  border-radius:14px;padding:12px 24px;font-size:.88rem;z-index:9999;opacity:0;
-  transition:all .3s;white-space:nowrap;pointer-events:none;font-weight:700;
-}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-#toast.success{border-color:var(--green);color:var(--green)}
-#toast.error{border-color:var(--red);color:var(--red)}
-
-.mt8{margin-top:8px}.mt12{margin-top:12px}.mb8{margin-bottom:8px}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.error-box{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e293b;border:2px solid #ef4444;border-radius:16px;padding:24px;max-width:90%;width:400px;text-align:center}
+.error-box h2{color:#ef4444;margin-bottom:16px}
+.error-box p{color:#94a3b8;margin-bottom:16px;font-size:.9rem}
+.error-box button{background:#667eea;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-weight:700;cursor:pointer}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
 
 <div id="loader">
-  <div class="loader-brand">
-    <div class="loader-icon">📊</div>
-    <div class="loader-name">Hisaab Pro</div>
-  </div>
+  <div class="loader-icon">📊</div>
+  <div class="loader-name">Hisaab Pro</div>
   <div class="loader-ring"></div>
 </div>
 
-<div id="auth">
-  <div class="auth-wrap">
-    <div class="auth-brand">
-      <div class="icon">📊</div>
-      <h1>Hisaab Pro</h1>
-      <p>व्यावसायिक हिशेब व्यवस्थापन</p>
-    </div>
-    <div class="auth-box">
-      <h2>लॉगिन करा</h2>
-      <div class="field"><label>ईमेल</label><input type="email" id="l-email" placeholder="तुमचा ईमेल"/></div>
-      <div class="field"><label>पासवर्ड</label><input type="password" id="l-pass" placeholder="पासवर्ड"/></div>
-      <button class="btn btn-primary btn-full" onclick="doLogin()">लॉगिन करा →</button>
-      <p class="auth-err" id="l-err"></p>
-    </div>
-  </div>
+<div id="error-container" class="error-box hidden">
+  <h2>⚠️ त्रुटी आढळी</h2>
+  <p id="error-msg"></p>
+  <button onclick="location.reload()">पुन्हा प्रयत्न करा</button>
 </div>
 
-<div id="app">
-  <div class="topbar">
-    <div class="topbar-title" id="ptitle">डॅशबोर्ड</div>
-    <div style="display:flex;gap:10px">
-      <div class="icon-btn" onclick="openSearch()">🔍</div>
-      <div class="icon-btn" onclick="goPage('settings')">👤</div>
+<div id="app" style="display:none;padding:20px">
+  <h1 style="margin-bottom:20px">Hisaab Pro - लॉगिन</h1>
+  <div style="max-width:400px;margin:0 auto;background:#1e293b;padding:24px;border-radius:16px">
+    <div style="margin-bottom:16px">
+      <label style="display:block;margin-bottom:8px;color:#94a3b8">ईमेल</label>
+      <input type="email" id="email" style="width:100%;padding:12px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#fff" placeholder="email@example.com"/>
     </div>
-  </div>
-
-  <div id="pages">
-    <!-- DASHBOARD -->
-    <div class="page active" id="page-dashboard">
-      <div class="stats-grid">
-        <div class="stat stat-in">
-          <div class="stat-lbl">आजचे उत्पन्न</div>
-          <div class="stat-val c-green" id="d-in">₹0</div>
-        </div>
-        <div class="stat stat-ex">
-          <div class="stat-lbl">आजचा खर्च</div>
-          <div class="stat-val c-red" id="d-ex">₹0</div>
-        </div>
-        <div class="stat stat-bal">
-          <div class="stat-lbl">एकूण बॅलन्स</div>
-          <div class="stat-val c-accent" id="d-bal">₹0</div>
-        </div>
-      </div>
-      <div class="shdr"><h3>📋 अलीकडील व्यवहार</h3><button class="btn btn-ghost btn-sm" onclick="goPage('transactions')">सर्व</button></div>
-      <div id="d-txs"></div>
-      <div class="shdr"><h3>🔔 रिमाइंडर</h3><button class="btn btn-ghost btn-sm" onclick="goPage('reminders')">सर्व</button></div>
-      <div id="d-rems"></div>
+    <div style="margin-bottom:16px">
+      <label style="display:block;margin-bottom:8px;color:#94a3b8">पासवर्ड</label>
+      <input type="password" id="password" style="width:100%;padding:12px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#fff" placeholder="••••••••"/>
     </div>
-
-    <!-- SITES -->
-    <div class="page" id="page-sites">
-      <div class="searchbar"><span>🔍</span><input type="text" id="site-search" placeholder="साइट शोधा..." oninput="filterSites()"/></div>
-      <div id="sites-list"></div>
-      <div class="fab" onclick="openAddSite()" id="fab-site" style="display:none">＋</div>
-    </div>
-
-    <!-- TRANSACTIONS -->
-    <div class="page" id="page-transactions">
-      <div class="chips" id="tx-chips">
-        <div class="chip active" onclick="setTxFilter(this,'')">सर्व</div>
-        <div class="chip" onclick="setTxFilter(this,'income')">💚 उत्पन्न</div>
-        <div class="chip" onclick="setTxFilter(this,'expense')">❤️ खर्च</div>
-        <div class="chip" onclick="setTxFilter(this,'advance')">🟡 आगाऊ</div>
-        <div class="chip" onclick="setTxFilter(this,'receive')">💜 प्राप्त</div>
-        <div class="chip" onclick="setTxFilter(this,'payment')">🟠 देणे</div>
-      </div>
-      <div id="tx-list"></div>
-      <div class="fab" onclick="openAddTx()">＋</div>
-    </div>
-
-    <!-- REMINDERS -->
-    <div class="page" id="page-reminders">
-      <div class="tabs">
-        <div class="tab active" onclick="setRemTab(this,'pending')">⏳ बाकी</div>
-        <div class="tab" onclick="setRemTab(this,'completed')">✅ पूर्ण</div>
-      </div>
-      <div id="rem-list"></div>
-      <div class="fab" onclick="openAddRem()">＋</div>
-    </div>
-
-    <!-- CHAT -->
-    <div class="page" id="page-chat">
-      <div class="chat-tabs">
-        <div class="chat-tab active" onclick="setChatTab(this,'group')">👥 ग्रुप चॅट</div>
-        <div class="chat-tab" onclick="setChatTab(this,'personal')">💬 वैयक्तिक</div>
-      </div>
-      <div id="chat-users" style="display:none;margin-bottom:16px"></div>
-      <div class="chat-wrap">
-        <div class="chat-msgs" id="chat-msgs"></div>
-        <div class="chat-bar">
-          <input type="text" id="chat-inp" placeholder="संदेश लिहा..." onkeydown="if(event.key==='Enter')sendChat()"/>
-          <button class="chat-send" onclick="sendChat()">➤</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ADMIN -->
-    <div class="page" id="page-admin">
-      <div class="tabs">
-        <div class="tab active" onclick="setAdminTab(this,'staff')">👥 स्टाफ</div>
-        <div class="tab" onclick="setAdminTab(this,'log')">📋 लॉग</div>
-      </div>
-      <div id="admin-staff">
-        <button class="btn btn-primary btn-full mb8" onclick="openAddStaff()">＋ नवीन स्टाफ जोडा</button>
-        <div id="staff-list"></div>
-      </div>
-      <div id="admin-log" style="display:none"><div id="act-list"></div></div>
-    </div>
-
-    <!-- SETTINGS -->
-    <div class="page" id="page-settings">
-      <div class="set-sec">
-        <h3>प्रोफाइल</h3>
-        <div class="set-item" style="cursor:default">
-          <div class="set-item-l">
-            <div class="set-ico" style="background:var(--gradient);color:#fff">👤</div>
-            <div><div class="set-lbl" id="pr-name">-</div><div class="set-sub" id="pr-role">-</div></div>
-          </div>
-        </div>
-      </div>
-      <div class="set-sec">
-        <h3>खाते</h3>
-        <div class="set-item" onclick="doLogout()">
-          <div class="set-item-l">
-            <div class="set-ico" style="background:var(--red-dim);color:var(--red)">🚪</div>
-            <div><div class="set-lbl" style="color:var(--red)">लॉगआउट</div></div>
-          </div>
-          <span>›</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- SEARCH -->
-    <div class="page" id="page-search">
-      <div class="searchbar"><span>🔍</span><input type="text" id="gsearch" placeholder="शोधा..." oninput="doSearch()"/><span style="cursor:pointer" onclick="goBack()">✕</span></div>
-      <div id="search-res"></div>
-    </div>
-  </div>
-
-  <div class="bnav">
-    <div class="nitem active" id="nav-dashboard" onclick="goPage('dashboard')"><div class="ni">🏠</div><span>होम</span></div>
-    <div class="nitem" id="nav-sites" onclick="goPage('sites')"><div class="ni">🏗️</div><span>साइट</span></div>
-    <div class="nitem" id="nav-transactions" onclick="goPage('transactions')"><div class="ni">💸</div><span>व्यवहार</span></div>
-    <div class="nitem" id="nav-reminders" onclick="goPage('reminders')"><div class="ni">🔔</div><span>रिमाइंडर</span></div>
-    <div class="nitem" id="nav-chat" onclick="goPage('chat')"><div class="ni">💬</div><span>चॅट</span><div class="nbadge" id="cbadge" style="display:none">0</div></div>
-  </div>
-</div>
-
-<div id="toast"></div>
-
-<!-- MODALS (same structure as before, just adding necessary fields) -->
-<div class="mo" id="mo-site">
-  <div class="modal">
-    <div class="mo-drag"></div>
-    <div class="mo-title" id="site-mo-title">नवीन साइट</div>
-    <div class="field"><label>साइटचे नाव ★</label><input id="s-name" placeholder="उदा. पुणे बिल्डिंग"/></div>
-    <div class="field"><label>पत्ता</label><input id="s-addr" placeholder="पत्ता"/></div>
-    <div class="field"><label>वर्णन</label><textarea id="s-desc" placeholder="वर्णन..."></textarea></div>
-    <div class="mo-acts">
-      <button class="btn btn-ghost" onclick="closeModal('mo-site')">रद्द करा</button>
-      <button class="btn btn-primary" onclick="saveSite()">जतन करा</button>
-    </div>
-  </div>
-</div>
-
-<div class="mo" id="mo-ledger">
-  <div class="modal">
-    <div class="mo-drag"></div>
-    <div class="mo-title" id="ledger-mo-title">नवीन लेजर</div>
-    <div class="field"><label>साइट ★</label><select id="led-site"><option value="">-- साइट निवडा --</option></select></div>
-    <div class="field"><label>व्यक्तीचे नाव ★</label><input id="led-name" placeholder="व्यक्तीचे नाव"/></div>
-    <div class="field"><label>फोन</label><input id="led-phone" type="tel" placeholder="फोन नंबर"/></div>
-    <div class="field"><label>पत्ता</label><input id="led-addr" placeholder="पत्ता"/></div>
-    <div class="field"><label>सुरुवातीचे बॅलन्स</label><input id="led-open" type="number" placeholder="0" value="0"/></div>
-    <div class="mo-acts">
-      <button class="btn btn-ghost" onclick="closeModal('mo-ledger')">रद्द करा</button>
-      <button class="btn btn-primary" onclick="saveLedger()">जतन करा</button>
-    </div>
-  </div>
-</div>
-
-<div class="mo" id="mo-tx">
-  <div class="modal">
-    <div class="mo-drag"></div>
-    <div class="mo-title" id="tx-mo-title">नवीन व्यवहार</div>
-    <div class="field"><label>तारीख ★</label><input id="tx-date" type="date"/></div>
-    <div class="field"><label>प्रकार ★</label>
-      <select id="tx-type">
-        <option value="income">💚 उत्पन्न</option>
-        <option value="expense">❤️ खर्च</option>
-        <option value="advance">🟡 आगाऊ</option>
-        <option value="receive">💜 प्राप्त</option>
-        <option value="payment">🟠 देणे</option>
-      </select>
-    </div>
-    <div class="field"><label>साइट</label><select id="tx-site" onchange="onTxSiteChange()"><option value="">-- साइट नाही --</option></select></div>
-    <div class="field"><label>लेजर</label><select id="tx-ledger"><option value="">-- लेजर नाही --</option></select></div>
-    <div class="field"><label>रक्कम ★</label><input id="tx-amt" type="number" placeholder="₹ 0"/></div>
-    <div class="field"><label>वर्णन</label><input id="tx-desc" placeholder="वर्णन"/></div>
-    <div class="field"><label>टीप</label><input id="tx-rem" placeholder="टीप"/></div>
-    <div class="mo-acts">
-      <button class="btn btn-ghost" onclick="closeModal('mo-tx')">रद्द करा</button>
-      <button class="btn btn-primary" onclick="saveTx()">जतन करा</button>
-    </div>
-  </div>
-</div>
-
-<div class="mo" id="mo-tx-detail">
-  <div class="modal">
-    <div class="mo-drag"></div>
-    <div class="mo-title" id="txd-title">व्यवहार तपशील</div>
-    <div id="txd-body"></div>
-    <div id="txd-acts" class="mo-acts"></div>
-  </div>
-</div>
-
-<div class="mo" id="mo-rem">
-  <div class="modal">
-    <div class="mo-drag"></div>
-    <div class="mo-title" id="rem-mo-title">नवीन रिमाइंडर</div>
-    <div class="field"><label>शीर्षक ★</label><input id="r-title" placeholder="रिमाइंडर शीर्षक"/></div>
-    <div class="field"><label>तारीख</label><input id="r-date" type="date"/></div>
-    <div class="field"><label>वेळ</label><input id="r-time" type="time"/></div>
-    <div class="field"><label>नोट्स</label><textarea id="r-notes" placeholder="नोट्स..."></textarea></div>
-    <div class="mo-acts">
-      <button class="btn btn-ghost" onclick="closeModal('mo-rem')">रद्द करा</button>
-      <button class="btn btn-primary" onclick="saveRem()">जतन करा</button>
-    </div>
-  </div>
-</div>
-
-<div class="mo" id="mo-staff">
-  <div class="modal">
-    <div class="mo-drag"></div>
-    <div class="mo-title" id="staff-mo-title">नवीन स्टाफ</div>
-    <div class="field"><label>पूर्ण नाव ★</label><input id="st-name" placeholder="पूर्ण नाव"/></div>
-    <div class="field"><label>ईमेल ★</label><input id="st-email" type="email" placeholder="ईमेल"/></div>
-    <div class="field" id="st-pass-field"><label>पासवर्ड ★</label><input id="st-pass" type="password" placeholder="किमान 6 अक्षरे"/></div>
-    <div class="field"><label>फोन</label><input id="st-phone" type="tel" placeholder="फोन"/></div>
-    <div class="field"><label>भूमिका</label>
-      <select id="st-role">
-        <option value="staff">स्टाफ</option>
-        <option value="admin">अॅडमिन</option>
-      </select>
-    </div>
-    <div class="mo-acts">
-      <button class="btn btn-ghost" onclick="closeModal('mo-staff')">रद्द करा</button>
-      <button class="btn btn-primary" onclick="saveStaff()">जतन करा</button>
-    </div>
-  </div>
-</div>
-
-<div class="mo" id="mo-ledger-detail">
-  <div class="modal">
-    <div class="mo-drag"></div>
-    <div id="led-detail-body"></div>
-    <button class="btn btn-ghost btn-full mt12" onclick="closeModal('mo-ledger-detail')">बंद करा</button>
-  </div>
-</div>
-
-<div class="mo" id="mo-site-detail">
-  <div class="modal">
-    <div class="mo-drag"></div>
-    <div class="mo-title" id="site-d-title">साइट तपशील</div>
-    <div id="site-d-body"></div>
-    <div class="mo-acts" id="site-d-acts"></div>
+    <button onclick="doLogin()" style="width:100%;padding:12px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">लॉगिन करा</button>
+    <div id="login-error" style="margin-top:12px;color:#ef4444;text-align:center"></div>
   </div>
 </div>
 
@@ -657,948 +55,123 @@ input,select,textarea{font-family:inherit;outline:none;border:none}
 // SUPABASE CONFIG
 const SUPABASE_URL = 'https://thizsrfyzxtnujuxswwb.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoaXpzcmZ5enh0bnVqdXhzd3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1MzEyMTAsImV4cCI6MjA5ODEwNzIxMH0.5Kf3FTQvIHM2zzcW3375FELTTnPtIpXVupCrZp6Jbsw';
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// STATE
-let CU = null, CP = null, curPage = 'dashboard', prevPage = null;
-let txFilter = '', remTab = 'pending', adminTab = 'staff';
-let eId = { site: null, ledger: null, tx: null, rem: null, staff: null };
-let allSites = [], allTx = [], chatMsgs = [], chatCh = null;
-let _curTxId = null, _curSiteId = null, currentChatTab = 'group', currentPersonalChat = null;
-let unreadCount = 0;
+let currentUser = null;
+let userProfile = null;
+
+// ERROR HANDLER
+function showError(msg) {
+  console.error('Error:', msg);
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('error-container').classList.remove('hidden');
+  document.getElementById('error-msg').textContent = msg;
+}
 
 // INIT
 async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) { CU = session.user; const ok = await loadProfile(); if (ok !== false) showApp(); }
-  else showAuth();
-  sb.auth.onAuthStateChange(async (ev, s) => {
-    if (ev === 'SIGNED_IN') { CU = s.user; const ok = await loadProfile(); if (ok !== false) showApp(); }
-    if (ev === 'SIGNED_OUT') { CU = null; CP = null; showAuth(); }
-  });
+  try {
+    console.log('Initializing app...');
+    
+    // Check Supabase connection
+    const { data, error } = await sb.from('profiles').select('count', { count: 'exact', head: true });
+    if (error) {
+      console.error('Supabase connection error:', error);
+      throw new Error('Supabase शी कनेक्ट होऊ शकले नाही: ' + error.message);
+    }
+    console.log('Supabase connected successfully');
+    
+    // Check existing session
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      currentUser = session.user;
+      await loadProfile();
+      showDashboard();
+    } else {
+      showLogin();
+    }
+  } catch (err) {
+    showError('अ‍ॅप लोड करण्यात अयशस्वी: ' + err.message);
+  }
 }
 
 async function loadProfile() {
   try {
-    const { data, error } = await sb.from('profiles').select('*').eq('id', CU.id).single();
-    if (error) throw error;
-    CP = data;
-    if (!data || data.role === 'disabled') {
-      await sb.auth.signOut();
-      document.getElementById('l-err').textContent = 'तुमचा अकाउंट निष्क्रिय केला आहे.';
-      showAuth(); return false;
-    }
-    return true;
-  } catch (err) {
-    console.error('Profile load error:', err);
-    return false;
-  }
-}
-
-function showApp() {
-  allSites = []; allTx = [];
-  document.getElementById('loader').style.display = 'none';
-  document.getElementById('auth').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  document.getElementById('pr-name').textContent = CP?.full_name || CU.email;
-  document.getElementById('pr-role').textContent = CP?.role === 'admin' ? '🔑 अॅडमिन' : '👤 स्टाफ';
-  
-  // Show/hide FAB based on role
-  const fabSite = document.getElementById('fab-site');
-  if (fabSite) fabSite.style.display = CP?.role === 'admin' ? 'flex' : 'none';
-  
-  // Show admin nav only for admin
-  const old = document.getElementById('nav-admin'); if (old) old.remove();
-  if (CP?.role === 'admin') {
-    const el = document.createElement('div');
-    el.className = 'nitem'; el.id = 'nav-admin';
-    el.innerHTML = '<div class="ni">⚙️</div><span>अॅडमिन</span>';
-    el.onclick = () => goPage('admin');
-    document.querySelector('.bnav').appendChild(el);
-  }
-  
-  goPage('dashboard'); setupChat();
-}
-
-function showAuth() {
-  document.getElementById('loader').style.display = 'none';
-  document.getElementById('auth').style.display = 'block';
-  document.getElementById('app').style.display = 'none';
-}
-
-// AUTH
-async function doLogin() {
-  const email = g('l-email'), pass = g('l-pass');
-  if (!email || !pass) { document.getElementById('l-err').textContent = 'ईमेल आणि पासवर्ड आवश्यक'; return; }
-  document.getElementById('l-err').textContent = '';
-  try {
-    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    const { data, error } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
     if (error) {
-      document.getElementById('l-err').textContent = 'चुकीचा ईमेल किंवा पासवर्ड';
-      return;
+      console.error('Profile load error:', error);
+      throw new Error('प्रोफाइल लोड होऊ शकली नाही');
     }
-    await logAct('लॉगिन', 'यूजर लॉगिन');
+    userProfile = data;
+    console.log('Profile loaded:', userProfile);
   } catch (err) {
-    document.getElementById('l-err').textContent = 'लॉगिन अयशस्वी';
+    throw err;
   }
 }
 
-async function doLogout() { 
-  if (!confirm('लॉगआउट करायचे?')) return;
-  await logAct('लॉगआउट', ''); 
-  await sb.auth.signOut(); 
+function showLogin() {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
 }
 
-// NAV
-const TITLES = { dashboard:'डॅशबोर्ड', sites:'साइट्स', transactions:'व्यवहार', reminders:'रिमाइंडर', chat:'चॅट', admin:'अॅडमिन', settings:'सेटिंग्ज', search:'शोध' };
-
-function goPage(p) {
-  prevPage = curPage; curPage = p;
-  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
-  document.getElementById('page-' + p)?.classList.add('active');
-  document.querySelectorAll('.nitem').forEach(x => x.classList.remove('active'));
-  document.getElementById('nav-' + p)?.classList.add('active');
-  document.getElementById('ptitle').textContent = TITLES[p] || p;
-  loadPage(p);
-}
-function goBack() { if (prevPage) goPage(prevPage); }
-
-async function loadPage(p) {
-  switch(p) {
-    case 'dashboard': loadDash(); break;
-    case 'sites': loadSites(); break;
-    case 'transactions': loadTx(); await populateSiteSelects(); break;
-    case 'reminders': loadRems(); break;
-    case 'chat': if(currentChatTab==='group')scrollChat();else loadPersonalChats(); break;
-    case 'admin': if(CP?.role==='admin'){loadStaff();if(adminTab==='log')loadLog();} break;
-  }
-}
-
-// DASHBOARD
-async function loadDash() {
-  const today = new Date().toISOString().split('T')[0];
-  try {
-    const { data: txs } = await sb.from('transactions').select('*').order('created_at', { ascending: false }).limit(200);
-    allTx = txs || [];
-    const tod = allTx.filter(t => t.date === today);
-    const inc = tod.filter(t => ['income','receive'].includes(t.type)).reduce((s,t) => s + Number(t.amount), 0);
-    const exp = tod.filter(t => ['expense','advance','payment'].includes(t.type)).reduce((s,t) => s + Number(t.amount), 0);
-    const totalIn = allTx.filter(t => ['income','receive'].includes(t.type)).reduce((s,t) => s + Number(t.amount), 0);
-    const totalEx = allTx.filter(t => ['expense','advance','payment'].includes(t.type)).reduce((s,t) => s + Number(t.amount), 0);
-    document.getElementById('d-in').textContent = '₹' + fmt(inc);
-    document.getElementById('d-ex').textContent = '₹' + fmt(exp);
-    document.getElementById('d-bal').textContent = '₹' + fmt(totalIn - totalEx);
-    const rec = allTx.slice(0, 5);
-    document.getElementById('d-txs').innerHTML = rec.length ? rec.map(t => txItem(t)).join('') : '<div class="empty"><div class="ej">📭</div><p>व्यवहार नाहीत</p></div>';
-    const { data: rems } = await sb.from('reminders').select('*').eq('status','pending').order('reminder_date').limit(3);
-    document.getElementById('d-rems').innerHTML = rems?.length ? rems.map(r => `<div class="rem-item"><div class="rem-info"><div class="rem-title">${esc(r.title)}</div><div class="rem-sub">📅 ${r.reminder_date||'---'}</div></div></div>`).join('') : '<div class="empty"><div class="ej">🔔</div><p>रिमाइंडर नाहीत</p></div>';
-  } catch (err) {
-    console.error('Dashboard error:', err);
-  }
-}
-
-function txItem(t) {
-  const icons = { income:'💚', expense:'❤️', advance:'🟡', receive:'💜', payment:'🟠' };
-  const labels = { income:'उत्पन्न', expense:'खर्च', advance:'आगाऊ', receive:'प्राप्त', payment:'देणे' };
-  const pos = ['income','receive'].includes(t.type);
-  const creator = t.created_by_name || 'Unknown';
-  return `<div class="txi" onclick="openTxDetail('${t.id}')">
-    <div class="tx-dot dot-${t.type}">${icons[t.type]||'💰'}</div>
-    <div class="tx-info">
-      <div class="tx-name">${esc(t.description || labels[t.type])}</div>
-      <div class="tx-sub">📅 ${t.date} · 👤 ${esc(creator)} · <span class="badge bg-${t.type}">${labels[t.type]}</span></div>
-    </div>
-    <div class="tx-amt ${pos?'c-green':'c-red'}">${pos?'+':'-'}₹${fmt(t.amount)}</div>
-  </div>`;
-}
-
-// SITES (Admin only can edit/delete)
-async function loadSites() {
-  try {
-    const { data } = await sb.from('sites').select('*').order('name');
-    allSites = data || [];
-    renderSites(allSites);
-  } catch (err) {
-    console.error('Sites load error:', err);
-  }
-}
-
-async function renderSites(list) {
-  const el = document.getElementById('sites-list');
-  if (!list.length) { el.innerHTML = '<div class="empty"><div class="ej">🏗️</div><p>साइट नाही</p></div>'; return; }
-  try {
-    const { data: txs } = await sb.from('transactions').select('site_id,type,amount');
-    const balMap = {};
-    (txs||[]).forEach(t => {
-      if (!t.site_id) return;
-      if (!balMap[t.site_id]) balMap[t.site_id] = 0;
-      const pos = ['income','receive'].includes(t.type);
-      balMap[t.site_id] += pos ? Number(t.amount) : -Number(t.amount);
-    });
-    const { data: leds } = await sb.from('ledgers').select('site_id');
-    const ledMap = {};
-    (leds||[]).forEach(l => { ledMap[l.site_id] = (ledMap[l.site_id]||0) + 1; });
-    
-    const canEdit = CP?.role === 'admin';
-    el.innerHTML = list.map(s => {
-      const bal = balMap[s.id] || 0;
-      const lc = ledMap[s.id] || 0;
-      return `<div class="site-card" onclick="openSiteDetail('${s.id}')">
-        <div class="site-ico">🏗️</div>
-        <div class="site-info">
-          <div class="site-name">${esc(s.name)}</div>
-          <div class="site-sub">${s.address ? '📍 '+esc(s.address)+' · ' : ''}📒 ${lc} लेजर</div>
-        </div>
-        <div class="site-stat">
-          <div class="sv ${bal>=0?'c-green':'c-red'}">₹${fmt(Math.abs(bal))}</div>
-          <div class="sl">${bal>=0?'नफा':'तोटा'}</div>
-        </div>
-        ${canEdit ? `<div style="margin-left:8px" onclick="event.stopPropagation()"><button class="btn btn-ghost btn-xs" onclick="openEditSite('${s.id}')">✏️</button></div>` : ''}
-      </div>`;
-    }).join('');
-  } catch (err) {
-    console.error('Render sites error:', err);
-  }
-}
-
-function filterSites() {
-  const q = document.getElementById('site-search').value.toLowerCase();
-  renderSites(allSites.filter(s => s.name.toLowerCase().includes(q) || (s.address||'').toLowerCase().includes(q)));
-}
-
-function openAddSite() {
-  if (CP?.role !== 'admin') { toast('फक्त अॅडमिन साइट तयार करू शकतो', 'error'); return; }
-  eId.site = null;
-  document.getElementById('site-mo-title').textContent = 'नवीन साइट';
-  ['s-name','s-addr','s-desc'].forEach(id => document.getElementById(id).value = '');
-  openModal('mo-site');
-}
-
-async function openEditSite(id) {
-  if (CP?.role !== 'admin') { toast('फक्त अॅडमिन साइट संपादित करू शकतो', 'error'); return; }
-  eId.site = id;
-  const s = allSites.find(x => x.id === id); if (!s) return;
-  document.getElementById('site-mo-title').textContent = 'साइट संपादित करा';
-  document.getElementById('s-name').value = s.name || '';
-  document.getElementById('s-addr').value = s.address || '';
-  document.getElementById('s-desc').value = s.description || '';
-  closeModal('mo-site-detail'); openModal('mo-site');
-}
-
-async function saveSite() {
-  if (CP?.role !== 'admin') { toast('फक्त अॅडमिन साइट जतन करू शकतो', 'error'); return; }
-  const data = { name: g('s-name'), address: g('s-addr'), description: g('s-desc') };
-  if (!data.name) { toast('साइटचे नाव आवश्यक', 'error'); return; }
-  try {
-    let res;
-    if (eId.site) res = await sb.from('sites').update(data).eq('id', eId.site);
-    else { data.created_by = CU.id; res = await sb.from('sites').insert([data]); }
-    if (res.error) { toast('त्रुटी: ' + res.error.message, 'error'); return; }
-    await logAct(eId.site ? 'साइट अपडेट' : 'साइट तयार', data.name);
-    toast('साइट जतन ✓', 'success'); closeModal('mo-site'); loadSites(); await populateSiteSelects();
-  } catch (err) {
-    console.error('Save site error:', err);
-    toast('साइट जतन करण्यात अयशस्वी', 'error');
-  }
-}
-
-async function deleteSite(id) {
-  if (CP?.role !== 'admin') { toast('फक्त अॅडमिन साइट हटवू शकतो', 'error'); return; }
-  if (!confirm('साइट हटवायची? सर्व लेजर आणि व्यवहार हटतील.')) return;
-  try {
-    await sb.from('sites').delete().eq('id', id);
-    await logAct('साइट हटवली', id);
-    toast('साइट हटवली ✓', 'success'); closeModal('mo-site-detail'); loadSites();
-  } catch (err) {
-    console.error('Delete site error:', err);
-    toast('साइट हटवण्यात अयशस्वी', 'error');
-  }
-}
-
-async function openSiteDetail(id) {
-  _curSiteId = id;
-  const s = allSites.find(x => x.id === id); if (!s) return;
-  try {
-    const { data: leds } = await sb.from('ledgers').select('*').eq('site_id', id);
-    const { data: txs } = await sb.from('transactions').select('*').eq('site_id', id).order('date', { ascending: false }).limit(50);
-    const bal = (txs||[]).reduce((sum, t) => sum + (['income','receive'].includes(t.type) ? Number(t.amount) : -Number(t.amount)), 0);
-    
-    let html = `<div style="margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-        <div style="width:56px;height:56px;border-radius:16px;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:1.6rem">🏗️</div>
-        <div><div style="font-size:1.15rem;font-weight:800">${esc(s.name)}</div>${s.address?`<div style="font-size:.8rem;color:var(--text2);margin-top:4px">📍 ${esc(s.address)}</div>`:''}</div>
+function showDashboard() {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('app').innerHTML = `
+    <div style="max-width:800px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+        <h1>स्वागत, ${userProfile?.full_name || currentUser.email}</h1>
+        <button onclick="doLogout()" style="padding:8px 16px;background:#ef4444;color:#fff;border:none;border-radius:8px;cursor:pointer">लॉगआउट</button>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-        <div style="background:var(--green-dim);border-radius:14px;padding:14px;text-align:center"><div style="font-size:.72rem;color:var(--text2);margin-bottom:6px;text-transform:uppercase;font-weight:700">साइट बॅलन्स</div><div style="font-size:1.3rem;font-weight:900;color:${bal>=0?'var(--green)':'var(--red)'}">₹${fmt(Math.abs(bal))}</div></div>
-        <div style="background:var(--accent-dim);border-radius:14px;padding:14px;text-align:center"><div style="font-size:.72rem;color:var(--text2);margin-bottom:6px;text-transform:uppercase;font-weight:700">लेजर</div><div style="font-size:1.3rem;font-weight:900;color:var(--accent)">${(leds||[]).length}</div></div>
+      <div style="background:#1e293b;padding:20px;border-radius:16px;margin-bottom:16px">
+        <h2 style="margin-bottom:12px">प्रोफाइल माहिती</h2>
+        <p><strong>ईमेल:</strong> ${currentUser.email}</p>
+        <p><strong>नाव:</strong> ${userProfile?.full_name || 'N/A'}</p>
+        <p><strong>भूमिका:</strong> <span style="color:${userProfile?.role==='admin'?'#10b981':'#f59e0b'}">${userProfile?.role || 'N/A'}</span></p>
       </div>
-    </div>`;
-    
-    if (leds?.length) {
-      html += `<div class="shdr" style="margin-top:0"><h3>📒 लेजर</h3>${CP?.role==='admin'?`<button class="btn btn-ghost btn-xs" onclick="closeModal('mo-site-detail');openAddLedger('${id}')">＋ जोडा</button>`:''}</div>`;
-      html += leds.map(l => {
-        const lb = Number(l.current_balance||0);
-        return `<div class="li" onclick="openLedgerDetail('${l.id}')"><div class="li-av" style="background:var(--gradient)">📒</div><div class="li-info"><div class="li-name">${esc(l.person_name)}</div><div class="li-sub">📞 ${l.phone||'-'}</div></div><div class="${lb>=0?'c-green':'c-red'}" style="font-weight:800">₹${fmt(lb)}</div></div>`;
-      }).join('');
-    }
-    
-    if (txs?.length) {
-      html += `<div class="shdr"><h3>💸 व्यवहार (${txs.length})</h3></div>`;
-      html += txs.slice(0,20).map(t => txItem(t)).join('');
-    }
-    
-    document.getElementById('site-d-title').textContent = s.name;
-    document.getElementById('site-d-body').innerHTML = html;
-    const canEdit = CP?.role === 'admin';
-    document.getElementById('site-d-acts').innerHTML = `
-      <button class="btn btn-ghost" onclick="closeModal('mo-site-detail')">बंद करा</button>
-      ${canEdit ? `<button class="btn btn-warn btn-sm" onclick="openEditSite('${id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteSite('${id}')">🗑️</button>` : ''}
-    `;
-    openModal('mo-site-detail');
-  } catch (err) {
-    console.error('Site detail error:', err);
-  }
-}
-
-// LEDGERS
-function openAddLedger(siteId = '') {
-  if (CP?.role !== 'admin') { toast('फक्त अॅडमिन लेजर तयार करू शकतो', 'error'); return; }
-  eId.ledger = null;
-  document.getElementById('ledger-mo-title').textContent = 'नवीन लेजर';
-  ['led-name','led-phone','led-addr'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('led-open').value = '0';
-  populateSiteSelects().then(() => {
-    if (siteId) document.getElementById('led-site').value = siteId;
-  });
-  openModal('mo-ledger');
-}
-
-async function saveLedger() {
-  if (CP?.role !== 'admin') { toast('फक्त अॅडमिन लेजर जतन करू शकतो', 'error'); return; }
-  const data = { site_id: g('led-site')||null, person_name: g('led-name'), phone: g('led-phone'), address: g('led-addr'), opening_balance: Number(g('led-open'))||0, current_balance: Number(g('led-open'))||0 };
-  if (!data.person_name) { toast('नाव आवश्यक', 'error'); return; }
-  try {
-    let res;
-    if (eId.ledger) res = await sb.from('ledgers').update(data).eq('id', eId.ledger);
-    else { data.created_by = CU.id; res = await sb.from('ledgers').insert([data]); }
-    if (res.error) { toast('त्रुटी: ' + res.error.message, 'error'); return; }
-    await logAct('लेजर तयार', data.person_name);
-    toast('लेजर जतन ✓', 'success'); closeModal('mo-ledger');
-    if (_curSiteId) openSiteDetail(_curSiteId); else loadSites();
-  } catch (err) {
-    console.error('Save ledger error:', err);
-  }
-}
-
-async function openLedgerDetail(id) {
-  try {
-    const { data: l } = await sb.from('ledgers').select('*').eq('id', id).single(); if (!l) return;
-    const { data: txs } = await sb.from('transactions').select('*').eq('ledger_id', id).order('date', { ascending: false });
-    const bal = Number(l.current_balance || 0);
-    let html = `<div class="lbal-card"><div class="lbl">वर्तमान बॅलन्स</div><div class="val">₹${fmt(bal)}</div><div class="name">${esc(l.person_name)}</div></div>`;
-    html += `<div class="card"><div class="dr"><span class="dr-lbl">फोन</span><span class="dr-val">${l.phone||'-'}</span></div><div class="dr"><span class="dr-lbl">पत्ता</span><span class="dr-val">${l.address||'-'}</span></div><div class="dr"><span class="dr-lbl">सुरुवातीचे बॅलन्स</span><span class="dr-val">₹${fmt(l.opening_balance)}</span></div></div>`;
-    html += '<div class="shdr" style="margin-top:6px"><h3>व्यवहार इतिहास</h3></div>';
-    html += txs?.length ? txs.map(t => txItem(t)).join('') : '<div class="empty"><div class="ej">📭</div><p>व्यवहार नाहीत</p></div>';
-    document.getElementById('led-detail-body').innerHTML = html;
-    openModal('mo-ledger-detail');
-  } catch (err) {
-    console.error('Ledger detail error:', err);
-  }
-}
-
-// TRANSACTIONS (Staff can create, Admin can see all with creator info)
-async function loadTx() {
-  try {
-    let q = sb.from('transactions').select('*').order('date', { ascending: false }).order('created_at', { ascending: false }).limit(300);
-    if (txFilter) q = q.eq('type', txFilter);
-    const { data } = await q;
-    allTx = data || [];
-    const el = document.getElementById('tx-list');
-    el.innerHTML = allTx.length ? allTx.map(t => txItem(t)).join('') : '<div class="empty"><div class="ej">💸</div><p>व्यवहार नाहीत</p></div>';
-  } catch (err) {
-    console.error('Load tx error:', err);
-  }
-}
-
-function setTxFilter(el, type) {
-  txFilter = type;
-  document.querySelectorAll('#tx-chips .chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active'); loadTx();
-}
-
-async function openAddTx() {
-  eId.tx = null;
-  document.getElementById('tx-mo-title').textContent = 'नवीन व्यवहार';
-  document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
-  document.getElementById('tx-type').value = 'income';
-  document.getElementById('tx-amt').value = '';
-  document.getElementById('tx-desc').value = ''; document.getElementById('tx-rem').value = '';
-  document.getElementById('tx-ledger').innerHTML = '<option value="">-- लेजर नाही --</option>';
-  await populateSiteSelects();
-  openModal('mo-tx');
-}
-
-async function onTxSiteChange() {
-  const sid = g('tx-site');
-  document.getElementById('tx-ledger').innerHTML = '<option value="">-- लेजर नाही --</option>';
-  if (!sid) return;
-  try {
-    const { data: leds } = await sb.from('ledgers').select('id,person_name').eq('site_id', sid);
-    document.getElementById('tx-ledger').innerHTML = '<option value="">-- लेजर नाही --</option>' + (leds||[]).map(l => `<option value="${l.id}">${esc(l.person_name)}</option>`).join('');
-  } catch (err) {
-    console.error('Load ledgers error:', err);
-  }
-}
-
-async function saveTx() {
-  const data = { date: g('tx-date'), type: g('tx-type'), site_id: g('tx-site')||null, ledger_id: g('tx-ledger')||null, amount: Number(g('tx-amt')), description: g('tx-desc'), remarks: g('tx-rem') };
-  if (!data.date || !data.amount) { toast('तारीख आणि रक्कम आवश्यक', 'error'); return; }
-  try {
-    let res;
-    if (eId.tx) {
-      // Only admin or creator can edit
-      const existing = allTx.find(t => t.id === eId.tx);
-      if (CP?.role !== 'admin' && existing?.created_by !== CU.id) {
-        toast('फक्त अॅडमिन किंवा निर्माता व्यवहार संपादित करू शकतो', 'error');
-        return;
-      }
-      res = await sb.from('transactions').update(data).eq('id', eId.tx);
-    } else {
-      data.created_by = CU.id; 
-      data.created_by_name = CP?.full_name || CU.email; 
-      res = await sb.from('transactions').insert([data]);
-    }
-    if (res.error) { toast('त्रुटी: ' + res.error.message, 'error'); return; }
-
-    if (data.ledger_id) {
-      const { data: led } = await sb.from('ledgers').select('current_balance').eq('id', data.ledger_id).single();
-      if (led) {
-        const pos = ['income','receive'].includes(data.type);
-        const diff = pos ? Number(data.amount) : -Number(data.amount);
-        await sb.from('ledgers').update({ current_balance: Number(led.current_balance) + diff }).eq('id', data.ledger_id);
-      }
-    }
-
-    await logAct(eId.tx ? 'व्यवहार अपडेट' : 'व्यवहार जोडला', `₹${data.amount} ${data.type}`);
-    toast('व्यवहार जतन ✓', 'success'); closeModal('mo-tx'); loadTx();
-    if (curPage === 'dashboard') loadDash();
-  } catch (err) {
-    console.error('Save tx error:', err);
-    toast('व्यवहार जतन करण्यात अयशस्वी', 'error');
-  }
-}
-
-async function openTxDetail(id) {
-  _curTxId = id;
-  let t = allTx.find(x => x.id === id);
-  if (!t) { 
-    const { data } = await sb.from('transactions').select('*').eq('id', id).single(); 
-    t = data;
-  }
-  if (!t) return;
-  const labels = { income:'उत्पन्न', expense:'खर्च', advance:'आगाऊ', receive:'प्राप्त', payment:'देणे' };
-  const pos = ['income','receive'].includes(t.type);
-  const creator = t.created_by_name || 'Unknown';
-  document.getElementById('txd-title').innerHTML = `<span class="badge bg-${t.type}">${labels[t.type]}</span> व्यवहार`;
-  document.getElementById('txd-body').innerHTML = `
-    <div style="text-align:center;padding:20px 0 16px;border-bottom:1px solid var(--border);margin-bottom:16px">
-      <div style="font-size:2.4rem;font-weight:900" class="${pos?'c-green':'c-red'}">${pos?'+':'-'}₹${fmt(t.amount)}</div>
-      <div style="font-size:.85rem;color:var(--text2);margin-top:8px">📅 ${t.date}</div>
+      <div style="background:#1e293b;padding:20px;border-radius:16px">
+        <h2 style="margin-bottom:12px">डेटाबेस स्थिती</h2>
+        <p>✅ Supabase कनेक्टेड</p>
+        <p>✅ प्रोफाइल लोड झाली</p>
+        <p>✅ अ‍ॅप तयार</p>
+      </div>
     </div>
-    <div class="dr"><span class="dr-lbl">वर्णन</span><span class="dr-val">${esc(t.description||'-')}</span></div>
-    <div class="dr"><span class="dr-lbl">टीप</span><span class="dr-val">${esc(t.remarks||'-')}</span></div>
-    <div class="dr"><span class="dr-lbl">निर्माता</span><span class="dr-val">${esc(creator)}</span></div>
-    <div class="dr"><span class="dr-lbl">तारीख</span><span class="dr-val">${new Date(t.created_at).toLocaleString('mr-IN')}</span></div>
   `;
-  const canEdit = CP?.role === 'admin' || t.created_by === CU.id;
-  document.getElementById('txd-acts').innerHTML = `
-    <button class="btn btn-ghost" onclick="closeModal('mo-tx-detail')">बंद करा</button>
-    ${canEdit ? `<button class="btn btn-warn btn-sm" onclick="editCurTx()">✏️ संपादित</button><button class="btn btn-danger btn-sm" onclick="deleteCurTx()">🗑️ हटवा</button>` : ''}
-  `;
-  openModal('mo-tx-detail');
+  document.getElementById('app').style.display = 'block';
 }
 
-async function editCurTx() {
-  const t = allTx.find(x => x.id === _curTxId); if (!t) return;
-  eId.tx = t.id;
-  document.getElementById('tx-mo-title').textContent = 'व्यवहार संपादित करा';
-  document.getElementById('tx-date').value = t.date;
-  document.getElementById('tx-type').value = t.type;
-  await populateSiteSelects();
-  document.getElementById('tx-site').value = t.site_id || '';
-  await onTxSiteChange();
-  document.getElementById('tx-ledger').value = t.ledger_id || '';
-  document.getElementById('tx-amt').value = t.amount;
-  document.getElementById('tx-desc').value = t.description || '';
-  document.getElementById('tx-rem').value = t.remarks || '';
-  closeModal('mo-tx-detail'); openModal('mo-tx');
-}
-
-async function deleteCurTx() {
-  if (!confirm('व्यवहार हटवायचा?')) return;
-  const t = allTx.find(x => x.id === _curTxId);
-  if (CP?.role !== 'admin' && t?.created_by !== CU.id) {
-    toast('फक्त अॅडमिन किंवा निर्माता व्यवहार हटवू शकतो', 'error');
+async function doLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  
+  if (!email || !password) {
+    document.getElementById('login-error').textContent = 'ईमेल आणि पासवर्ड आवश्यक आहे';
     return;
   }
-  try {
-    const { error } = await sb.from('transactions').delete().eq('id', _curTxId);
-    if (error) { toast('त्रुटी: ' + error.message, 'error'); return; }
-    await logAct('व्यवहार हटवला', _curTxId);
-    toast('हटवला ✓', 'success'); closeModal('mo-tx-detail'); loadTx();
-  } catch (err) {
-    console.error('Delete tx error:', err);
-  }
-}
-
-// REMINDERS
-async function loadRems() {
-  try {
-    const { data } = await sb.from('reminders').select('*').eq('status', remTab).order('reminder_date');
-    const el = document.getElementById('rem-list');
-    if (!data?.length) { el.innerHTML = `<div class="empty"><div class="ej">🔔</div><p>${remTab==='pending'?'बाकी रिमाइंडर नाहीत':'पूर्ण रिमाइंडर नाहीत'}</p></div>`; return; }
-    el.innerHTML = data.map(r => `<div class="rem-item">
-      <div class="rem-check ${r.status==='completed'?'done'}" onclick="toggleRem('${r.id}','${r.status}')">✓</div>
-      <div class="rem-info">
-        <div class="rem-title">${esc(r.title)}</div>
-        <div class="rem-sub">📅 ${r.reminder_date||'---'} ${r.reminder_time?'⏰ '+r.reminder_time:''}</div>
-        ${r.notes ? `<div class="rem-sub" style="margin-top:6px">${esc(r.notes)}</div>` : ''}
-      </div>
-      <button class="btn btn-danger btn-xs" onclick="deleteRem('${r.id}')">🗑️</button>
-    </div>`).join('');
-  } catch (err) {
-    console.error('Load reminders error:', err);
-  }
-}
-
-function setRemTab(el, tab) {
-  remTab = tab;
-  document.querySelectorAll('#page-reminders .tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active'); loadRems();
-}
-
-function openAddRem() {
-  document.getElementById('rem-mo-title').textContent = 'नवीन रिमाइंडर';
-  ['r-title','r-notes'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('r-date').value = ''; document.getElementById('r-time').value = '';
-  openModal('mo-rem');
-}
-
-async function saveRem() {
-  const data = { title: g('r-title'), reminder_date: g('r-date')||null, reminder_time: g('r-time')||null, notes: g('r-notes'), status: 'pending', created_by: CU.id };
-  if (!data.title) { toast('शीर्षक आवश्यक', 'error'); return; }
-  try {
-    const { error } = await sb.from('reminders').insert([data]);
-    if (error) { toast('त्रुटी: ' + error.message, 'error'); return; }
-    await logAct('रिमाइंडर तयार', data.title);
-    toast('रिमाइंडर जतन ✓', 'success'); closeModal('mo-rem'); loadRems();
-  } catch (err) {
-    console.error('Save reminder error:', err);
-  }
-}
-
-async function toggleRem(id, status) {
-  try {
-    await sb.from('reminders').update({ status: status === 'pending' ? 'completed' : 'pending' }).eq('id', id);
-    loadRems();
-  } catch (err) {
-    console.error('Toggle reminder error:', err);
-  }
-}
-
-async function deleteRem(id) {
-  if (!confirm('रिमाइंडर हटवायचा?')) return;
-  try {
-    await sb.from('reminders').delete().eq('id', id);
-    toast('हटवला ✓', 'success'); loadRems();
-  } catch (err) {
-    console.error('Delete reminder error:', err);
-  }
-}
-
-// CHAT (Group + Personal with Edit/Delete)
-let groupChatChannel = null, personalChatChannel = null;
-
-function setupChat() {
-  loadChatMsgs();
-  // Group chat realtime
-  groupChatChannel = sb.channel('group_chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, msg => {
-    chatMsgs.push(msg.new); renderChat();
-    if (curPage !== 'chat' && msg.new.sender_id !== CU.id) {
-      unreadCount++;
-      const badge = document.getElementById('cbadge');
-      badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-      badge.style.display = 'flex';
-    }
-    scrollChat();
-  }).subscribe();
   
-  // Personal chat realtime
-  personalChatChannel = sb.channel('personal_chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'personal_chat_messages' }, msg => {
-    if (currentPersonalChat && msg.new.chat_id === currentPersonalChat) {
-      loadPersonalChatMessages(currentPersonalChat);
-    }
-  }).subscribe();
-}
-
-function setChatTab(el, tab) {
-  currentChatTab = tab;
-  document.querySelectorAll('.chat-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('chat-users').style.display = tab === 'personal' ? 'block' : 'none';
-  if (tab === 'group') {
-    loadChatMsgs();
-  } else {
-    loadPersonalChats();
-  }
-}
-
-async function loadPersonalChats() {
   try {
-    const { data } = await sb.from('personal_chats').select('*,user1:profiles!user1_id(full_name,email),user2:profiles!user2_id(full_name,email)').or(`user1_id.eq.${CU.id},user2_id.eq.${CU.id}`);
-    const el = document.getElementById('chat-users');
-    if (!data?.length) {
-      el.innerHTML = '<div class="empty"><div class="ej">💬</div><p>वैयक्तिक चॅट नाही</p></div>';
-      return;
-    }
-    el.innerHTML = data.map(c => {
-      const other = c.user1_id === CU.id ? c.user2 : c.user1;
-      return `<div class="li" onclick="openPersonalChat('${c.id}','${other.id}','${esc(other.full_name||other.email)}')">
-        <div class="li-av" style="background:var(--gradient)">👤</div>
-        <div class="li-info">
-          <div class="li-name">${esc(other.full_name||other.email)}</div>
-          <div class="li-sub">वैयक्तिक चॅट</div>
-        </div>
-      </div>`;
-    }).join('');
+    document.getElementById('login-error').textContent = 'लॉगिन होत आहे...';
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    
+    if (error) throw error;
+    
+    currentUser = data.user;
+    await loadProfile();
+    showDashboard();
   } catch (err) {
-    console.error('Load personal chats error:', err);
+    console.error('Login error:', err);
+    document.getElementById('login-error').textContent = 'लॉगिन अयशस्वी: ' + err.message;
   }
 }
 
-async function openPersonalChat(chatId, userId, userName) {
-  currentPersonalChat = chatId;
-  document.getElementById('ptitle').textContent = '💬 ' + userName;
-  await loadPersonalChatMessages(chatId);
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  userProfile = null;
+  location.reload();
 }
 
-async function loadPersonalChatMessages(chatId) {
-  try {
-    const { data } = await sb.from('personal_chat_messages').select('*').eq('chat_id', chatId).order('created_at').limit(100);
-    chatMsgs = data || [];
-    renderChat();
-    scrollChat();
-  } catch (err) {
-    console.error('Load personal messages error:', err);
-  }
-}
-
-async function loadChatMsgs() {
-  try {
-    const { data } = await sb.from('chat_messages').select('*').order('created_at').limit(100);
-    chatMsgs = data || []; renderChat(); scrollChat();
-    document.getElementById('ptitle').textContent = '👥 ग्रुप चॅट';
-  } catch (err) {
-    console.error('Load chat error:', err);
-  }
-}
-
-function renderChat() {
-  const el = document.getElementById('chat-msgs');
-  if (!chatMsgs.length) { el.innerHTML = '<div class="empty"><div class="ej">💬</div><p>अजून संदेश नाही</p></div>'; return; }
-  el.innerHTML = chatMsgs.map(m => {
-    const isMe = m.sender_id === CU?.id;
-    const canEdit = isMe || CP?.role === 'admin';
-    return `<div class="cb-wrap ${isMe?'me':'them'}" data-msg-id="${m.id}">
-      ${!isMe ? `<div class="cb-sender">${esc(m.sender_name||'Unknown')}</div>` : ''}
-      <div class="cb">${esc(m.message)}${m.edited?'<small style="opacity:.6"> (संपादित)</small>':''}</div>
-      <div class="cb-time">${fmtTime(m.created_at)}</div>
-      ${canEdit ? `<div class="cb-actions">
-        <button class="cb-action" onclick="editMessage('${m.id}','${esc(m.message)}')">✏️</button>
-        <button class="cb-action" onclick="deleteMessage('${m.id}')">🗑️</button>
-      </div>` : ''}
-    </div>`;
-  }).join('');
-}
-
-async function sendChat() {
-  const inp = document.getElementById('chat-inp');
-  const msg = inp.value.trim(); if (!msg) return;
-  inp.value = '';
-  try {
-    if (currentChatTab === 'group') {
-      const { error } = await sb.from('chat_messages').insert([{ sender_id: CU.id, sender_name: CP?.full_name || CU.email, message: msg }]);
-      if (error) { toast('संदेश पाठवला नाही', 'error'); inp.value = msg; }
-      else {
-        document.getElementById('cbadge').style.display = 'none';
-        unreadCount = 0;
-      }
-    } else if (currentPersonalChat) {
-      const { error } = await sb.from('personal_chat_messages').insert([{ chat_id: currentPersonalChat, sender_id: CU.id, message: msg }]);
-      if (error) { toast('संदेश पाठवला नाही', 'error'); inp.value = msg; }
-    }
-  } catch (err) {
-    console.error('Send chat error:', err);
-    toast('संदेश पाठवण्यात अयशस्वी', 'error');
-    inp.value = msg;
-  }
-}
-
-async function editMessage(msgId, currentMsg) {
-  const newMsg = prompt('संदेश संपादित करा:', currentMsg);
-  if (!newMsg || newMsg === currentMsg) return;
-  try {
-    if (currentChatTab === 'group') {
-      await sb.from('chat_messages').update({ message: newMsg, edited: true, edited_at: new Date().toISOString() }).eq('id', msgId);
-    } else {
-      await sb.from('personal_chat_messages').update({ message: newMsg, edited: true, edited_at: new Date().toISOString() }).eq('id', msgId);
-    }
-    toast('संदेश संपादित ✓', 'success');
-    if (currentChatTab === 'group') loadChatMsgs();
-    else loadPersonalChatMessages(currentPersonalChat);
-  } catch (err) {
-    console.error('Edit message error:', err);
-    toast('संदेश संपादित करण्यात अयशस्वी', 'error');
-  }
-}
-
-async function deleteMessage(msgId) {
-  if (!confirm('संदेश हटवायचा?')) return;
-  try {
-    if (currentChatTab === 'group') {
-      await sb.from('chat_messages').delete().eq('id', msgId);
-      loadChatMsgs();
-    } else {
-      await sb.from('personal_chat_messages').delete().eq('id', msgId);
-      loadPersonalChatMessages(currentPersonalChat);
-    }
-    toast('संदेश हटवला ✓', 'success');
-  } catch (err) {
-    console.error('Delete message error:', err);
-    toast('संदेश हटवण्यात अयशस्वी', 'error');
-  }
-}
-
-function scrollChat() {
-  const el = document.getElementById('chat-msgs');
-  if (el) setTimeout(() => { el.scrollTop = el.scrollHeight }, 100);
-}
-
-// ADMIN - STAFF (Admin only)
-async function loadStaff() {
-  if (CP?.role !== 'admin') return;
-  try {
-    const { data } = await sb.from('profiles').select('*').neq('id', CU.id).order('full_name');
-    const el = document.getElementById('staff-list');
-    if (!data?.length) { el.innerHTML = '<div class="empty"><div class="ej">👥</div><p>स्टाफ नाही</p></div>'; return; }
-    el.innerHTML = data.map(p => {
-      const dis = p.role === 'disabled' || p.is_active === false;
-      const rl = p.role === 'admin' ? 'अॅडमिन' : dis ? 'निष्क्रिय' : 'स्टाफ';
-      const bc = p.role === 'admin' ? 'bg-admin' : dis ? 'bg-disabled' : 'bg-staff';
-      return `<div class="li" style="${dis?'opacity:.55':''}">
-        <div class="li-av" style="background:${p.role==='admin'?'var(--gradient)':dis?'var(--red-dim)':'var(--green-dim)'}">👤</div>
-        <div class="li-info">
-          <div class="li-name">${esc(p.full_name)} <span class="badge ${bc}">${rl}</span></div>
-          <div class="li-sub">📞 ${p.phone||'-'}</div>
-        </div>
-        <div class="li-right">
-          <button class="btn btn-ghost btn-xs" onclick="openEditStaff('${p.id}')">✏️</button>
-          ${!dis ? `<button class="btn btn-danger btn-xs" onclick="disableStaff('${p.id}')">🚫</button>` : `<button class="btn btn-success btn-xs" onclick="enableStaff('${p.id}')">✅</button>`}
-        </div>
-      </div>`;
-    }).join('');
-  } catch (err) {
-    console.error('Load staff error:', err);
-  }
-}
-
-function openAddStaff() {
-  if (CP?.role !== 'admin') { toast('फक्त अॅडमिन स्टाफ जोडू शकतो', 'error'); return; }
-  eId.staff = null;
-  document.getElementById('staff-mo-title').textContent = 'नवीन स्टाफ';
-  ['st-name','st-email','st-pass','st-phone'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('st-role').value = 'staff';
-  document.getElementById('st-pass-field').style.display = 'block';
-  document.getElementById('st-email').readOnly = false;
-  openModal('mo-staff');
-}
-
-async function openEditStaff(id) {
-  if (CP?.role !== 'admin') { toast('फक्त अॅडमिन स्टाफ संपादित करू शकतो', 'error'); return; }
-  eId.staff = id;
-  try {
-    const { data: p } = await sb.from('profiles').select('*').eq('id', id).single();
-    if (!p) return;
-    document.getElementById('staff-mo-title').textContent = 'स्टाफ संपादित करा';
-    document.getElementById('st-name').value = p.full_name || '';
-    document.getElementById('st-email').value = p.email || '';
-    document.getElementById('st-email').readOnly = true;
-    document.getElementById('st-phone').value = p.phone || '';
-    document.getElementById('st-role').value = p.role === 'disabled' ? 'staff' : p.role;
-    document.getElementById('st-pass').value = '';
-    document.getElementById('st-pass-field').style.display = 'block';
-    openModal('mo-staff');
-  } catch (err) {
-    console.error('Load staff error:', err);
-  }
-}
-
-async function saveStaff() {
-  if (CP?.role !== 'admin') { toast('फक्त अॅडमिन स्टाफ जतन करू शकतो', 'error'); return; }
-  const name = g('st-name'), email = g('st-email'), pass = g('st-pass'), phone = g('st-phone'), role = g('st-role');
-  if (!name) { toast('नाव आवश्यक', 'error'); return; }
-  try {
-    if (eId.staff) {
-      const updateData = { full_name: name, phone, role, is_active: true };
-      const { error } = await sb.from('profiles').update(updateData).eq('id', eId.staff);
-      if (error) { toast('त्रुटी: ' + error.message, 'error'); return; }
-      if (pass && pass.length >= 6) {
-        toast('पासवर्ड बदल - Supabase dashboard वरून करावा', 'error');
-      }
-      await logAct('स्टाफ अपडेट', name);
-      toast(name + ' अपडेट ✓', 'success'); closeModal('mo-staff'); loadStaff();
-    } else {
-      if (!email || !pass) { toast('ईमेल आणि पासवर्ड आवश्यक', 'error'); return; }
-      if (pass.length < 6) { toast('पासवर्ड कमीत कमी 6 अक्षरे', 'error'); return; }
-      const tmp = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
-      const { data, error } = await tmp.auth.signUp({ email, password: pass });
-      if (error) { toast('त्रुटी: ' + error.message, 'error'); return; }
-      const uid = data.user?.id;
-      if (!uid) { toast('यूजर तयार झाला नाही', 'error'); return; }
-      const { error: pe } = await sb.from('profiles').insert([{ id: uid, full_name: name, role, phone, is_active: true, email }]);
-      if (pe) { toast('Profile error: ' + pe.message, 'error'); return; }
-      await logAct('स्टाफ जोडला', name + ' (' + role + ')');
-      toast(name + ' जोडला ✓', 'success'); closeModal('mo-staff'); loadStaff();
-    }
-  } catch (err) {
-    console.error('Save staff error:', err);
-    toast('स्टाफ जतन करण्यात अयशस्वी', 'error');
-  }
-}
-
-async function disableStaff(id) {
-  if (CP?.role !== 'admin') { toast('फक्त अॅडमिन स्टाफ निष्क्रिय करू शकतो', 'error'); return; }
-  if (!confirm('स्टाफ निष्क्रिय करायचा?')) return;
-  try {
-    await sb.from('profiles').update({ is_active: false, role: 'disabled' }).eq('id', id);
-    await logAct('स्टाफ निष्क्रिय', id);
-    toast('निष्क्रिय केला ✓', 'success'); loadStaff();
-  } catch (err) {
-    console.error('Disable staff error:', err);
-  }
-}
-
-async function enableStaff(id) {
-  if (CP?.role !== 'admin') { toast('फक्त अॅडमिन स्टाफ सक्रिय करू शकतो', 'error'); return; }
-  try {
-    await sb.from('profiles').update({ is_active: true, role: 'staff' }).eq('id', id);
-    await logAct('स्टाफ सक्रिय', id);
-    toast('सक्रिय केला ✓', 'success'); loadStaff();
-  } catch (err) {
-    console.error('Enable staff error:', err);
-  }
-}
-
-async function loadLog() {
-  try {
-    const { data } = await sb.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(100);
-    const el = document.getElementById('act-list');
-    if (!data?.length) { el.innerHTML = '<div class="empty"><div class="ej">📋</div><p>क्रिया नाही</p></div>'; return; }
-    el.innerHTML = data.map(a => `<div class="log-item"><div class="log-dot">📌</div><div><div class="log-act">${esc(a.action)}</div><div class="log-who">👤 ${esc(a.user_name||'Unknown')}</div><div class="log-t">🕐 ${timeAgo(a.created_at)}</div></div></div>`).join('');
-  } catch (err) {
-    console.error('Load log error:', err);
-  }
-}
-
-function setAdminTab(el, tab) {
-  adminTab = tab;
-  document.querySelectorAll('#page-admin .tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('admin-staff').style.display = tab === 'staff' ? 'block' : 'none';
-  document.getElementById('admin-log').style.display = tab === 'log' ? 'block' : 'none';
-  if (tab === 'log') loadLog();
-}
-
-// SEARCH
-let sCat = 'all';
-function openSearch() { goPage('search'); document.getElementById('gsearch').focus(); }
-function setSearchCat(el, cat) {
-  sCat = cat;
-  document.querySelectorAll('#page-search .chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active'); doSearch();
-}
-async function doSearch() {
-  const q = document.getElementById('gsearch').value.trim();
-  const el = document.getElementById('search-res');
-  if (!q) { el.innerHTML = '<div class="empty"><div class="ej">🔍</div><p>शब्द टाइप करा</p></div>'; return; }
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text2)">शोधत आहे...</div>';
-  try {
-    let html = '';
-    if (sCat === 'all' || sCat === 'sites') {
-      const { data } = await sb.from('sites').select('*').ilike('name', '%' + q + '%').limit(10);
-      if (data?.length) html += '<div class="shdr"><h3>🏗️ साइट</h3></div>' + data.map(s => `<div class="li" onclick="openSiteDetail('${s.id}')"><div class="li-av" style="background:var(--gradient)">🏗️</div><div class="li-info"><div class="li-name">${esc(s.name)}</div><div class="li-sub">${s.address||''}</div></div></div>`).join('');
-    }
-    if (sCat === 'all' || sCat === 'ledgers') {
-      const { data } = await sb.from('ledgers').select('*').ilike('person_name', '%' + q + '%').limit(10);
-      if (data?.length) html += '<div class="shdr"><h3>📒 लेजर</h3></div>' + data.map(l => `<div class="li" onclick="openLedgerDetail('${l.id}')"><div class="li-av" style="background:var(--green-dim)">📒</div><div class="li-info"><div class="li-name">${esc(l.person_name)}</div><div class="li-sub">📞 ${l.phone||'-'}</div></div><div class="${Number(l.current_balance)>=0?'c-green':'c-red'}" style="font-weight:800">₹${fmt(l.current_balance)}</div></div>`).join('');
-    }
-    if (sCat === 'all' || sCat === 'transactions') {
-      const { data } = await sb.from('transactions').select('*').or(`description.ilike.%${q}%,remarks.ilike.%${q}%`).limit(10);
-      if (data?.length) html += '<div class="shdr"><h3>💸 व्यवहार</h3></div>' + data.map(t => txItem(t)).join('');
-    }
-    el.innerHTML = html || '<div class="empty"><div class="ej">😕</div><p>काही सापडले नाही</p></div>';
-  } catch (err) {
-    console.error('Search error:', err);
-    el.innerHTML = '<div class="empty"><div class="ej">⚠️</div><p>शोध अयशस्वी</p></div>';
-  }
-}
-
-// POPULATE SITE SELECTS
-async function populateSiteSelects() {
-  try {
-    if (!allSites.length) { const { data } = await sb.from('sites').select('id,name').order('name'); allSites = data || []; }
-    const opts = '<option value="">-- साइट नाही --</option>' + allSites.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
-    ['tx-site','led-site'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = opts; });
-  } catch (err) {
-    console.error('Populate selects error:', err);
-  }
-}
-
-// ACTIVITY LOG
-async function logAct(action, details = '') {
-  try {
-    await sb.from('activity_logs').insert([{ user_id: CU?.id, user_name: CP?.full_name || CU?.email, action, details }]);
-  } catch (err) {
-    console.warn('Log activity error:', err);
-  }
-}
-
-// MODAL HELPERS
-function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
-document.querySelectorAll('.mo').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); }));
-
-// UTILS
-function g(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
-function fmt(n) { return Number(n || 0).toLocaleString('en-IN'); }
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-function fmtTime(ts) { if (!ts) return ''; return new Date(ts).toLocaleTimeString('mr-IN', { hour: '2-digit', minute: '2-digit' }); }
-function timeAgo(ts) {
-  if (!ts) return '';
-  const d = (Date.now() - new Date(ts)) / 1000;
-  if (d < 60) return 'आत्ता';
-  if (d < 3600) return Math.floor(d/60) + ' मिनिटांपूर्वी';
-  if (d < 86400) return Math.floor(d/3600) + ' तासांपूर्वी';
-  return Math.floor(d/86400) + ' दिवसांपूर्वी';
-}
-function toast(msg, type = '') {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.className = 'show ' + (type || '');
-  setTimeout(() => el.className = '', 3000);
-}
-
-init();
+// Start app
+window.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
