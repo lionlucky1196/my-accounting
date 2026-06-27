@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#6366f1" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<title>Accounting App</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --primary-light: #818cf8;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --info: #3b82f6;
+    --bg: #f3f4f6;
+    --surface: #ffffff;
+    --surface-2: #f9fafb;
+    --text: #111827;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --shadow: 0 2px 8px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --nav-h: 64px;
+    --header-h: 60px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  [data-theme="dark"] {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-2: #273449;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --shadow: 0 2px 8px rgba(0,0,0,0.3);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    overscroll-behavior: none;
+    height: 100%;
+  }
+  body { font-size: 15px; line-height: 1.5; }
+  button, input, select, textarea {
+    font-family: inherit; font-size: inherit; color: inherit;
+  }
+  input, select, textarea {
+    width: 100%; padding: 12px 14px;
+    background: var(--surface-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    outline: none; transition: border-color .2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+  textarea { resize: vertical; min-height: 70px; }
+  label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+  .field { margin-bottom: 14px; }
+
+  /* ===== LOGIN ===== */
+  #loginScreen {
+    position: fixed; inset: 0;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px; z-index: 100;
+  }
+  .login-card {
+    background: var(--surface); color: var(--text);
+    width: 100%; max-width: 400px;
+    padding: 28px 22px; border-radius: 24px;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp .4s ease;
+  }
+  .login-logo {
+    width: 72px; height: 72px; border-radius: 20px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 32px; font-weight: 700;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 24px rgba(99,102,241,.4);
+  }
+  .login-title { text-align: center; font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+  .login-sub { text-align: center; color: var(--text-muted); margin: 0 0 22px; font-size: 13px; }
+  .login-tabs { display: flex; background: var(--surface-2); border-radius: 12px; padding: 4px; margin-bottom: 18px; }
+  .login-tab {
+    flex: 1; padding: 10px; text-align: center; border-radius: 8px;
+    cursor: pointer; font-weight: 600; font-size: 14px; color: var(--text-muted);
+    transition: all .2s;
+  }
+  .login-tab.active { background: var(--primary); color: #fff; box-shadow: var(--shadow); }
+
+  /* ===== APP SHELL ===== */
+  #app { display: none; min-height: 100vh; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 8px); }
+  .header {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--surface);
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--border);
+    height: var(--header-h);
+  }
+  .header h1 { font-size: 18px; margin: 0; flex: 1; font-weight: 700; }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 12px;
+    background: var(--surface-2); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text); font-size: 18px;
+    transition: transform .15s;
+  }
+  .icon-btn:active { transform: scale(.92); }
+
+  .view { display: none; padding: 16px; animation: fadeIn .25s ease; }
+  .view.active { display: block; }
+
+  /* ===== BOTTOM NAV ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-around;
+    padding: 8px 4px calc(8px + var(--safe-bottom));
+    z-index: 40;
+    box-shadow: 0 -4px 16px rgba(0,0,0,.04);
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 6px 4px; cursor: pointer; color: var(--text-muted);
+    font-size: 11px; font-weight: 600;
+    transition: color .2s; border: none; background: none;
+  }
+  .nav-item .nav-icon { font-size: 22px; margin-bottom: 2px; }
+  .nav-item.active { color: var(--primary); }
+  .nav-item.active .nav-icon { transform: translateY(-2px); }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 16px; box-shadow: var(--shadow);
+    margin-bottom: 12px;
+  }
+  .card-title { font-size: 13px; color: var(--text-muted); margin: 0 0 4px; font-weight: 500; }
+  .card-value { font-size: 22px; font-weight: 700; margin: 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stat-income .card-value { color: var(--success); }
+  .stat-expense .card-value { color: var(--danger); }
+  .stat-cash .card-value { color: var(--primary); }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 12px 18px; border-radius: 12px; border: none;
+    background: var(--primary); color: #fff; font-weight: 600;
+    cursor: pointer; font-size: 14px;
+    transition: transform .15s, opacity .2s;
+    width: 100%;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: var(--danger); }
+  .btn-success { background: var(--success); }
+  .btn-sm { padding: 8px 12px; font-size: 13px; width: auto; }
+  .fab {
+    position: fixed; right: 16px; bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px);
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #fff; border: none; font-size: 26px;
+    box-shadow: 0 8px 24px rgba(99,102,241,.4);
+    cursor: pointer; z-index: 30;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fab:active { transform: scale(.92); }
+
+  /* ===== LIST ITEMS ===== */
+  .list-item {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 14px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: var(--shadow); cursor: pointer;
+    transition: transform .15s;
+  }
+  .list-item:active { transform: scale(.98); }
+  .list-avatar {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px; flex-shrink: 0;
+  }
+  .list-body { flex: 1; min-width: 0; }
+  .list-title { font-weight: 600; margin: 0 0 2px; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .list-sub { color: var(--text-muted); font-size: 12px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .list-amount { font-weight: 700; font-size: 15px; }
+  .list-amount.income { color: var(--success); }
+  .list-amount.expense, .list-amount.payment, .list-amount.advance { color: var(--danger); }
+  .list-amount.receive { color: var(--info); }
+
+  /* ===== MODAL / SHEET ===== */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,.5);
+    z-index: 200; display: none; align-items: flex-end; justify-content: center;
+    animation: fadeIn .2s;
+  }
+  .modal-backdrop.active { display: flex; }
+  .modal-sheet {
+    background: var(--surface); width: 100%; max-width: 500px;
+    border-radius: 24px 24px 0 0;
+    padding: 20px; max-height: 92vh; overflow-y: auto;
+    animation: slideUp .3s ease;
+  }
+  .modal-handle {
+    width: 40px; height: 4px; background: var(--border);
+    border-radius: 2px; margin: 0 auto 14px;
+  }
+  .modal-title { font-size: 18px; font-weight: 700; margin: 0 0 16px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .modal-actions .btn { flex: 1; }
+
+  /* ===== TOAST ===== */
+  #toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: var(--bg);
+    padding: 10px 18px; border-radius: 24px;
+    font-size: 14px; font-weight: 500;
+    z-index: 500; opacity: 0; pointer-events: none;
+    transition: opacity .25s, transform .25s;
+    box-shadow: var(--shadow-lg);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(6px); }
+  #toast.success { background: var(--success); color: #fff; }
+  #toast.error { background: var(--danger); color: #fff; }
+
+  /* ===== CHAT ===== */
+  .chat-container { display: flex; flex-direction: column; height: calc(100vh - var(--header-h) - var(--nav-h) - var(--safe-bottom) - 16px); }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 8px 4px; }
+  .chat-msg { margin-bottom: 10px; display: flex; flex-direction: column; max-width: 80%; }
+  .chat-msg.me { align-self: flex-end; align-items: flex-end; }
+  .chat-msg.other { align-self: flex-start; }
+  .chat-bubble {
+    padding: 10px 14px; border-radius: 18px;
+    font-size: 14px; word-wrap: break-word;
+    box-shadow: var(--shadow);
+  }
+  .chat-msg.me .chat-bubble { background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
+  .chat-msg.other .chat-bubble { background: var(--surface); border-bottom-left-radius: 4px; }
+  .chat-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; padding: 0 6px; }
+  .chat-input-wrap {
+    display: flex; gap: 8px; padding: 10px;
+    background: var(--surface); border-top: 1px solid var(--border);
+    border-radius: var(--radius); margin-top: 8px;
+  }
+  .chat-input-wrap input { flex: 1; }
+  .chat-send {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: var(--primary); color: #fff; border: none;
+    font-size: 18px; cursor: pointer; flex-shrink: 0;
+  }
+
+  /* ===== SEARCH ===== */
+  .search-bar {
+    position: relative; margin-bottom: 14px;
+  }
+  .search-bar input { padding-left: 40px; }
+  .search-bar::before {
+    content: "🔍"; position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%); font-size: 16px; opacity: .6;
+  }
+
+  /* ===== BADGE ===== */
+  .badge {
+    display: inline-block; padding: 3px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-success { background: rgba(16,185,129,.15); color: var(--success); }
+  .badge-danger { background: rgba(239,68,68,.15); color: var(--danger); }
+  .badge-warning { background: rgba(245,158,11,.15); color: var(--warning); }
+  .badge-info { background: rgba(59,130,246,.15); color: var(--info); }
+
+  .empty {
+    text-align: center; padding: 40px 20px; color: var(--text-muted);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 10px; opacity: .5; }
+
+  .section-title {
+    font-size: 14px; font-weight: 700; color: var(--text-muted);
+    margin: 16px 0 10px; text-transform: uppercase; letter-spacing: .5px;
+  }
+
+  .breadcrumb {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text-muted); margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .breadcrumb a { color: var(--primary); text-decoration: none; font-weight: 600; }
+
+  /* Animations */
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 0; height: 0; }
+
+  /* Loading */
+  .loading { text-align: center; padding: 20px; color: var(--text-muted); }
+  .spinner {
+    display: inline-block; width: 24px; height: 24px;
+    border: 3px solid var(--border); border-top-color: var(--primary);
+    border-radius: 50%; animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">₹</div>
+    <h2 class="login-title">Accounting App</h2>
+    <p class="login-sub">Manage your business on the go</p>
+    <div class="login-tabs">
+      <div class="login-tab active" data-tab="login" onclick="switchLoginTab('login')">Login</div>
+      <div class="login-tab" data-tab="signup" onclick="switchLoginTab('signup')">Sign Up</div>
+    </div>
+    <div id="loginForm">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" />
+      </div>
+      <button class="btn" onclick="doLogin()">Login</button>
+    </div>
+    <div id="signupForm" style="display:none;">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="signupName" placeholder="Your name" />
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <input type="tel" id="signupPhone" placeholder="Phone number" />
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="signupEmail" placeholder="you@example.com" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="signupPassword" placeholder="Min 6 characters" />
+      </div>
+      <button class="btn" onclick="doSignup()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <div class="header">
+    <button class="icon-btn" id="backBtn" onclick="goBack()" style="display:none;">←</button>
+    <h1 id="pageTitle">Dashboard</h1>
+    <button class="icon-btn" onclick="openView('search')">🔍</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div class="grid-2">
+      <div class="card stat-income">
+        <p class="card-title">Today's Income</p>
+        <p class="card-value" id="statIncome">₹0</p>
+      </div>
+      <div class="card stat-expense">
+        <p class="card-title">Today's Expense</p>
+        <p class="card-value" id="statExpense">₹0</p>
+      </div>
+    </div>
+    <div class="card stat-cash">
+      <p class="card-title">Cash Balance</p>
+      <p class="card-value" id="statCash">₹0</p>
+    </div>
+
+    <div class="section-title">Recent Transactions</div>
+    <div id="recentTx"></div>
+
+    <div class="section-title">Upcoming Reminders</div>
+    <div id="recentReminders"></div>
+
+    <div class="section-title">Recent Activities</div>
+    <div id="recentActivities"></div>
+  </div>
+
+  <!-- COMPANIES -->
+  <div class="view" id="view-companies">
+    <div class="search-bar"><input type="text" id="searchCompanies" placeholder="Search companies..." oninput="renderCompanies()" /></div>
+    <div id="companiesList"></div>
+  </div>
+
+  <!-- COMPANY DETAIL (sites + ledgers) -->
+  <div class="view" id="view-companyDetail">
+    <div class="breadcrumb"><a onclick="openView('companies')">Companies</a> <span>›</span> <span id="cdName"></span></div>
+    <div class="card" id="cdInfo"></div>
+    <div class="section-title">Sites / Works</div>
+    <div id="sitesList"></div>
+    <div class="section-title">Personal Ledgers</div>
+    <div id="ledgersList"></div>
+  </div>
+
+  <!-- LEDGER DETAIL -->
+  <div class="view" id="view-ledgerDetail">
+    <div class="breadcrumb" id="ldBreadcrumb"></div>
+    <div class="card" id="ldInfo"></div>
+    <div class="section-title">Transaction History</div>
+    <div id="ldTransactions"></div>
+  </div>
+
+  <!-- TRANSACTIONS -->
+  <div class="view" id="view-transactions">
+    <div class="search-bar"><input type="text" id="searchTx" placeholder="Search transactions..." oninput="renderTransactions()" /></div>
+    <div id="transactionsList"></div>
+  </div>
+
+  <!-- REMINDERS -->
+  <div class="view" id="view-reminders">
+    <div id="remindersList"></div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="view" id="view-chat" style="padding: 8px;">
+    <div class="chat-container">
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-wrap">
+        <input type="text" id="chatInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter')sendChat()" />
+        <button class="chat-send" onclick="sendChat()">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVITY LOG (admin) -->
+  <div class="view" id="view-activity">
+    <div id="activityList"></div>
+  </div>
+
+  <!-- STAFF (admin) -->
+  <div class="view" id="view-staff">
+    <div id="staffList"></div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="view" id="view-search">
+    <div class="search-bar"><input type="text" id="globalSearch" placeholder="Search anything..." oninput="doGlobalSearch()" /></div>
+    <div id="searchResults"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="view" id="view-settings">
+    <div class="card">
+      <p class="card-title">Profile</p>
+      <p class="list-title" id="setUserName">-</p>
+      <p class="list-sub" id="setUserEmail">-</p>
+      <span class="badge badge-info" id="setUserRole">-</span>
+    </div>
+    <div class="card">
+      <p class="card-title">Appearance</p>
+      <div style="display:flex; gap:10px; margin-top:8px;">
+        <button class="btn btn-secondary" onclick="setTheme('light')">☀️ Light</button>
+        <button class="btn btn-secondary" onclick="setTheme('dark')">🌙 Dark</button>
+      </div>
+    </div>
+    <button class="btn btn-danger" onclick="doLogout()">Logout</button>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="nav-item active" data-view="dashboard" onclick="openView('dashboard')">
+      <span class="nav-icon">🏠</span><span>Home</span>
+    </button>
+    <button class="nav-item" data-view="companies" onclick="openView('companies')">
+      <span class="nav-icon">🏢</span><span>Companies</span>
+    </button>
+    <button class="nav-item" data-view="transactions" onclick="openView('transactions')">
+      <span class="nav-icon">💰</span><span>Transactions</span>
+    </button>
+    <button class="nav-item" data-view="reminders" onclick="openView('reminders')">
+      <span class="nav-icon">🔔</span><span>Reminders</span>
+    </button>
+    <button class="nav-item" data-view="chat" onclick="openView('chat')">
+      <span class="nav-icon">💬</span><span>Chat</span>
+    </button>
+  </div>
+
+  <button class="fab" id="fab" onclick="fabAction()">+</button>
+</div>
+
+<!-- ============ MODAL ============ -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title" id="modalTitle">Title</h3>
+    <div id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   SUPABASE CONFIG — REPLACE THESE WITH YOUR OWN VALUES
+   ============================================================ */
+const SUPABASE_URL = "sb_publishable_36jkKPqHJb9xYUjhtFlMNg_54Eqbw-M";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV0dmRvbndma2FwaXd4dGpvaHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1MzA1MTAsImV4cCI6MjA5ODEwNjUxMH0.DpIo3aIkvu8A94Lf8uV7ObUOUpmnTqOTk5PcAR9D02k";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ============================================================
+   GLOBAL STATE
+   ============================================================ */
+let currentUser = null;
+let currentProfile = null;
+let currentView = 'dashboard';
+let viewStack = ['dashboard'];
+let currentCompanyId = null;
+let currentLedgerId = null;
+let chatChannel = null;
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => '₹' + Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+const today = () => new Date().toISOString().slice(0,10);
+const initials = (s) => (s || '?').split(' ').map(x => x[0]).join('').slice(0,2).toUpperCase();
+
+function toast(msg, type='') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(() => t.className = '', 2200);
+}
+
+function openModal(title, bodyHtml, actions) {
+  $('modalTitle').textContent = title;
+  $('modalBody').innerHTML = bodyHtml;
+  const act = $('modalActions');
+  act.innerHTML = '';
+  actions.forEach(a => {
+    const b = document.createElement('button');
+    b.className = 'btn ' + (a.class || '');
+    b.textContent = a.label;
+    b.onclick = a.onClick;
+    act.appendChild(b);
+  });
+  $('modal').classList.add('active');
+}
+function closeModal() { $('modal').classList.remove('active'); }
+$('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
+
+/* ============================================================
+   THEME
+   ============================================================ */
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('theme', t);
+  document.querySelector('meta[name="theme-color"]').content = t === 'dark' ? '#0f172a' : '#6366f1';
+}
+setTheme(localStorage.getItem('theme') || 'light');
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+function switchLoginTab(tab) {
+  document.querySelectorAll('.login-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  $('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+  $('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
+}
+
+async function doLogin() {
+  const email = $('loginEmail').value.trim();
+  const password = $('loginPassword').value;
+  if (!email || !password) return toast('Enter email & password', 'error');
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) return toast(error.message, 'error');
+  await afterLogin(data.user);
+}
+
+async function doSignup() {
+  const name = $('signupName').value.trim();
+  const phone = $('signupPhone').value.trim();
+  const email = $('signupEmail').value.trim();
+  const password = $('signupPassword').value;
+  if (!name || !email || !password) return toast('Fill all fields', 'error');
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if (error) return toast(error.message, 'error');
+  if (data.user) {
+    // Check if first user -> admin
+    const { count } = await sb.from('profiles').select('*', { count: 'exact', head: true });
+    const role = (count || 0) === 0 ? 'admin' : 'staff';
+    await sb.from('profiles').insert({
+      id: data.user.id,
+      name, phone, email, role,
+      created_at: new Date().toISOString()
+    });
+    await logActivity('User Signup', `${name} registered as ${role}`);
+    await afterLogin(data.user);
+    toast('Account created!', 'success');
+  } else {
+    toast('Check email to confirm', 'success');
+  }
+}
+
+async function doLogout() {
+  if (chatChannel) { sb.removeChannel(chatChannel); chatChannel = null; }
+  await sb.auth.signOut();
+  currentUser = null; currentProfile = null;
+  $('app').style.display = 'none';
+  $('loginScreen').style.display = 'flex';
+}
+
+async function afterLogin(user) {
+  currentUser = user;
+  let { data: prof } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  if (!prof) {
+    // fallback create
+    const { count } = await sb.from('profiles').select('*', { count: 'exact', head: true });
+    const role = (count || 0) === 0 ? 'admin' : 'staff';
+    const { data: newProf } = await sb.from('profiles').insert({
+      id: user.id, name: user.email.split('@')[0], email: user.email, role,
+      created_at: new Date().toISOString()
+    }).select().single();
+    prof = newProf;
+  }
+  currentProfile = prof;
+  await logActivity('User Login', `${prof.name} logged in`);
+  $('loginScreen').style.display = 'none';
+  $('app').style.display = 'block';
+  initApp();
+}
+
+/* ============================================================
+   ACTIVITY LOG
+   ============================================================ */
+async function logActivity(action, details) {
+  if (!currentUser) return;
+  try {
+    await sb.from('activity_logs').insert({
+      user_id: currentUser.id,
+      user_name: currentProfile?.name || currentUser.email,
+      action, details,
+      created_at: new Date().toISOString()
+    });
+  } catch(e) { console.warn('log err', e); }
+}
+
+/* ============================================================
+   APP INIT
+   ============================================================ */
+function initApp() {
+  // populate settings
+  $('setUserName').textContent = currentProfile.name || '-';
+  $('setUserEmail').textContent = currentUser.email;
+  $('setUserRole').textContent = currentProfile.role.toUpperCase();
+
+  // show/hide admin nav
+  renderAdminNav();
+  openView('dashboard');
+  subscribeChat();
+}
+
+function renderAdminNav() {
+  // Admin gets extra menu via settings view; keep bottom nav clean
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+function openView(v, push=true) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  const target = $('view-' + v);
+  if (target) target.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === v));
+  const titles = {
+    dashboard: 'Dashboard', companies: 'Companies', transactions: 'Transactions',
+    reminders: 'Reminders', chat: 'Team Chat', activity: 'Activity Log',
+    staff: 'Staff Management', settings: 'Settings', search: 'Search',
+    companyDetail: 'Company', ledgerDetail: 'Ledger'
+  };
+  $('pageTitle').textContent = titles[v] || v;
+  $('backBtn').style.display = (v === 'companyDetail' || v === 'ledgerDetail' || v === 'search' || v === 'settings' || v === 'activity' || v === 'staff') ? 'flex' : 'none';
+  if (push && viewStack[viewStack.length-1] !== v) viewStack.push(v);
+  currentView = v;
+  refreshView(v);
+}
+
+function goBack() {
+  if (viewStack.length > 1) {
+    viewStack.pop();
+    const prev = viewStack[viewStack.length-1];
+    openView(prev, false);
+  } else {
+    openView('dashboard', false);
+  }
+}
+
+function refreshView(v) {
+  if (v === 'dashboard') renderDashboard();
+  else if (v === 'companies') renderCompanies();
+  else if (v === 'companyDetail') renderCompanyDetail();
+  else if (v === 'ledgerDetail') renderLedgerDetail();
+  else if (v === 'transactions') renderTransactions();
+  else if (v === 'reminders') renderReminders();
+  else if (v === 'chat') scrollChatBottom();
+  else if (v === 'activity') renderActivity();
+  else if (v === 'staff') renderStaff();
+  else if (v === 'settings') {}
+  else if (v === 'search') { $('globalSearch').value = ''; $('searchResults').innerHTML = ''; }
+}
+
+/* ============================================================
+   FAB ACTION
+   ============================================================ */
+function fabAction() {
+  if (currentView === 'companies') openCompanyForm();
+  else if (currentView === 'companyDetail') openSiteOrLedgerChoice();
+  else if (currentView === 'ledgerDetail') openTransactionForm();
+  else if (currentView === 'transactions') openTransactionForm();
+  else if (currentView === 'reminders') openReminderForm();
+  else if (currentView === 'staff' && currentProfile.role === 'admin') openStaffForm();
+  else openTransactionForm();
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+async function renderDashboard() {
+  const t = today();
+  const { data: tx } = await sb.from('transactions').select('amount,type,date');
+  let inc=0, exp=0, cash=0;
+  (tx || []).forEach(r => {
+    const a = Number(r.amount);
+    if (r.type === 'income' || r.type === 'receive') cash += a;
+    else cash -= a;
+    if (r.date === t) {
+      if (r.type === 'income' || r.type === 'receive') inc += a;
+      else exp += a;
+    }
+  });
+  $('statIncome').textContent = fmt(inc);
+  $('statExpense').textContent = fmt(exp);
+  $('statCash').textContent = fmt(cash);
+
+  // Recent transactions
+  const { data: recent } = await sb.from('transactions').select('*,companies(name),sites(name),ledgers(name)').order('date', { ascending: false }).limit(5);
+  $('recentTx').innerHTML = (recent && recent.length) ? recent.map(txCard).join('') : emptyHtml('No transactions yet', '💸');
+
+  // Reminders
+  const { data: rem } = await sb.from('reminders').select('*').eq('status','pending').gte('date', t).order('date').limit(5);
+  $('recentReminders').innerHTML = (rem && rem.length) ? rem.map(reminderCard).join('') : emptyHtml('No upcoming reminders', '📅');
+
+  // Activities
+  const { data: act } = await sb.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(5);
+  $('recentActivities').innerHTML = (act && act.length) ? act.map(activityCard).join('') : emptyHtml('No activities', '📋');
+}
+
+function txCard(t) {
+  const typeClass = t.type;
+  const sign = (t.type === 'income' || t.type === 'receive') ? '+' : '-';
+  const name = t.ledgers?.name || t.sites?.name || t.companies?.name || 'Transaction';
+  return `<div class="list-item" onclick="openTransactionDetail('${t.id}')">
+    <div class="list-avatar">${initials(name)}</div>
+    <div class="list-body">
+      <p class="list-title">${escapeHtml(name)}</p>
+      <p class="list-sub">${t.date} • ${t.type} ${t.description ? '• ' + escapeHtml(t.description.slice(0,30)) : ''}</p>
+    </div>
+    <div class="list-amount ${typeClass}">${sign}${fmt(t.amount)}</div>
+  </div>`;
+}
+
+function reminderCard(r) {
+  return `<div class="list-item" onclick="openReminderForm('${r.id}')">
+    <div class="list-avatar" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);">🔔</div>
+    <div class="list-body">
+      <p class="list-title">${escapeHtml(r.title)}</p>
+      <p class="list-sub">${r.date} ${r.time || ''}</p>
+    </div>
+    <span class="badge badge-warning">${r.status}</span>
+  </div>`;
+}
+
+function activityCard(a) {
+  return `<div class="list-item" style="cursor:default;">
+    <div class="list-avatar" style="background:linear-gradient(135deg,#64748b,#94a3b8);">📝</div>
+    <div class="list-body">
+      <p class="list-title">${escapeHtml(a.action)}</p>
+      <p class="list-sub">${escapeHtml(a.user_name)} • ${new Date(a.created_at).toLocaleString()}</p>
+    </div>
+  </div>`;
+}
+
+function emptyHtml(msg, icon) {
+  return `<div class="empty"><div class="empty-icon">${icon}</div>${msg}</div>`;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ============================================================
+   COMPANIES
+   ============================================================ */
+async function renderCompanies() {
+  const q = ($('searchCompanies')?.value || '').toLowerCase();
+  const { data } = await sb.from('companies').select('*').order('created_at', { ascending: false });
+  const list = (data || []).filter(c => !q || c.name.toLowerCase().includes(q) || (c.owner||'').toLowerCase().includes(q));
+  $('companiesList').innerHTML = list.length ? list.map(c => `
+    <div class="list-item" onclick="openCompany('${c.id}')">
+      <div class="list-avatar">${initials(c.name)}</div>
+      <div class="list-body">
+        <p class="list-title">${escapeHtml(c.name)}</p>
+        <p class="list-sub">${escapeHtml(c.owner || 'No owner')} ${c.phone ? '• ' + escapeHtml(c.phone) : ''}</p>
+      </div>
+      <button class="icon-btn" onclick="event.stopPropagation();openCompanyMenu('${c.id}')">⋮</button>
+    </div>`).join('') : emptyHtml('No companies yet', '🏢');
+}
+
+function openCompany(id) {
+  currentCompanyId = id;
+  openView('companyDetail');
+}
+
+async function renderCompanyDetail() {
+  const { data: c } = await sb.from('companies').select('*').eq('id', currentCompanyId).single();
+  if (!c) return;
+  $('cdName').textContent = c.name;
+  $('cdInfo').innerHTML = `
+    <p class="card-title">${escapeHtml(c.name)}</p>
+    <p class="list-sub">Owner: ${escapeHtml(c.owner || '-')} • ${escapeHtml(c.phone || '-')}</p>
+    <p class="list-sub" style="margin-top:4px;">${escapeHtml(c.address || '')}</p>
+    ${c.notes ? `<p class="list-sub" style="margin-top:4px;">📝 ${escapeHtml(c.notes)}</p>` : ''}
+  `;
+  const { data: sites } = await sb.from('sites').select('*').eq('company_id', currentCompanyId).order('created_at', { ascending: false });
+  $('sitesList').innerHTML = (sites && sites.length) ? sites.map(s => `
+    <div class="list-item" onclick="openSiteTransactions('${s.id}','${escapeHtml(s.name)}')">
+      <div class="list-avatar" style="background:linear-gradient(135deg,#10b981,#34d399);">📍</div>
+      <div class="list-body">
+        <p class="list-title">${escapeHtml(s.name)}</p>
+        <p class="list-sub">${escapeHtml(s.notes || 'No notes')}</p>
+      </div>
+      <button class="icon-btn" onclick="event.stopPropagation();openSiteMenu('${s.id}')">⋮</button>
+    </div>`).join('') : emptyHtml('No sites yet', '📍');
+
+  const { data: leds } = await sb.from('ledgers').select('*').eq('company_id', currentCompanyId).order('created_at', { ascending: false });
+  $('ledgersList').innerHTML = (leds && leds.length) ? leds.map(l => `
+    <div class="list-item" onclick="openLedger('${l.id}')">
+      <div class="list-avatar" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);">📒</div>
+      <div class="list-body">
+        <p class="list-title">${escapeHtml(l.name)}</p>
+        <p class="list-sub">${escapeHtml(l.phone || '')} • Balance: ${fmt(l.current_balance)}</p>
+      </div>
+      <button class="icon-btn" onclick="event.stopPropagation();openLedgerMenu('${l.id}')">⋮</button>
+    </div>`).join('') : emptyHtml('No ledgers yet', '📒');
+}
+
+async function openSiteTransactions(siteId, siteName) {
+  // Show transactions for this site
+  currentCompanyId = null; currentLedgerId = null;
+  const { data: tx } = await sb.from('transactions').select('*,companies(name),sites(name),ledgers(name)').eq('site_id', siteId).order('date', { ascending: false });
+  openModal('Site: ' + siteName,
+    (tx && tx.length) ? tx.map(txCard).join('') : emptyHtml('No transactions', '💸'),
+    [{ label: 'Close', class: 'btn-secondary', onClick: closeModal }]
+  );
+}
+
+function openCompanyForm(id=null) {
+  const isEdit = !!id;
+  const load = async () => {
+    let c = { name:'', owner:'', phone:'', address:'', notes:'' };
+    if (isEdit) {
+      const { data } = await sb.from('companies').select('*').eq('id', id).single();
+      if (data) c = data;
+    }
+    openModal(isEdit ? 'Edit Company' : 'New Company', `
+      <div class="field"><label>Company Name</label><input id="f_name" value="${escapeHtml(c.name)}" /></div>
+      <div class="field"><label>Owner Name</label><input id="f_owner" value="${escapeHtml(c.owner||'')}" /></div>
+      <div class="field"><label>Phone</label><input id="f_phone" value="${escapeHtml(c.phone||'')}" /></div>
+      <div class="field"><label>Address</label><textarea id="f_address">${escapeHtml(c.address||'')}</textarea></div>
+      <div class="field"><label>Notes</label><textarea id="f_notes">${escapeHtml(c.notes||'')}</textarea></div>
+    `, [
+      { label: 'Cancel', class: 'btn-secondary', onClick: closeModal },
+      { label: isEdit ? 'Update' : 'Create', onClick: async () => {
+        const payload = {
+          name: $('f_name').value.trim(),
+          owner: $('f_owner').value.trim(),
+          phone: $('f_phone').value.trim(),
+          address: $('f_address').value.trim(),
+          notes: $('f_notes').value.trim(),
+          created_by: currentUser.id
+        };
+        if (!payload.name) return toast('Name required', 'error');
+        if (isEdit) await sb.from('companies').update(payload).eq('id', id);
+        else {
+          payload.created_at = new Date().toISOString();
+          await sb.from('companies').insert(payload);
+          await logActivity('Company Created', payload.name);
+        }
+        closeModal(); renderCompanies(); toast('Saved', 'success');
+      }}
+    ]);
+  };
+  load();
+}
+
+function openCompanyMenu(id) {
+  openModal('Company Options', `
+    <button class="btn" style="margin-bottom:10px;" onclick="closeModal();openCompanyForm('${id}')">✏️ Edit</button>
+    <button class="btn btn-danger" onclick="deleteCompany('${id}')">🗑️ Delete</button>
+  `, [{ label: 'Close', class: 'btn-secondary', onClick: closeModal }]);
+}
+
+async function deleteCompany(id) {
+  if (!confirm('Delete this company and all its sites/ledgers?')) return;
+  await sb.from('sites').delete().eq('company_id', id);
+  await sb.from('ledgers').delete().eq('company_id', id);
+  await sb.from('transactions').delete().eq('company_id', id);
+  await sb.from('companies').delete().eq('id', id);
+  await logActivity('Company Deleted', id);
+  closeModal(); renderCompanies(); toast('Deleted', 'success');
+}
+
+/* ============================================================
+   SITES
+   ============================================================ */
+function openSiteOrLedgerChoice() {
+  openModal('Add to Company', `
+    <button class="btn" style="margin-bottom:10px;" onclick="closeModal();openSiteForm()">📍 New Site</button>
+    <button class="btn btn-secondary" onclick="closeModal();openLedgerForm()">📒 New Ledger</button>
+  `, [{ label: 'Cancel', class: 'btn-secondary', onClick: closeModal }]);
+}
+
+function openSiteForm(id=null) {
+  const isEdit = !!id;
+  const load = async () => {
+    let s = { name:'', notes:'' };
+    if (isEdit) {
+      const { data } = await sb.from('sites').select('*').eq('id', id).single();
+      if (data) s = data;
+    }
+    openModal(isEdit ? 'Edit Site' : 'New Site', `
+      <div class="field"><label>Site Name</label><input id="f_name" value="${escapeHtml(s.name)}" placeholder="e.g. House, Building" /></div>
+      <div class="field"><label>Notes</label><textarea id="f_notes">${escapeHtml(s.notes||'')}</textarea></div>
+    `, [
+      { label: 'Cancel', class: 'btn-secondary', onClick: closeModal },
+      { label: isEdit ? 'Update' : 'Create', onClick: async () => {
+        const payload = {
+          company_id: currentCompanyId,
+          name: $('f_name').value.trim(),
+          notes: $('f_notes').value.trim(),
+          created_by: currentUser.id
+        };
+        if (!payload.name) return toast('Name required', 'error');
+        if (isEdit) await sb.from('sites').update(payload).eq('id', id);
+        else {
+          payload.created_at = new Date().toISOString();
+          await sb.from('sites').insert(payload);
+          await logActivity('Site Created', payload.name);
+        }
+        closeModal(); renderCompanyDetail(); toast('Saved', 'success');
+      }}
+    ]);
+  };
+  load();
+}
+
+function openSiteMenu(id) {
+  openModal('Site Options', `
+    <button class="btn" style="margin-bottom:10px;" onclick="closeModal();openSiteForm('${id}')">✏️ Edit</button>
+    <button class="btn btn-danger" onclick="deleteSite('${id}')">🗑️ Delete</button>
+  `, [{ label: 'Close', class: 'btn-secondary', onClick: closeModal }]);
+}
+
+async function deleteSite(id) {
+  if (!confirm('Delete this site?')) return;
+  await sb.from('transactions').delete().eq('site_id', id);
+  await sb.from('sites').delete().eq('id', id);
+  closeModal(); renderCompanyDetail(); toast('Deleted', 'success');
+}
+
+/* ============================================================
+   LEDGERS
+   ============================================================ */
+function openLedgerForm(id=null) {
+  const isEdit = !!id;
+  const load = async () => {
+    let l = { name:'', phone:'', address:'', opening_balance:0, current_balance:0, notes:'' };
+    if (isEdit) {
+      const { data } = await sb.from('ledgers').select('*').eq('id', id).single();
+      if (data) l = data;
+    }
+    openModal(isEdit ? 'Edit Ledger' : 'New Ledger', `
+      <div class="field"><label>Person Name</label><input id="f_name" value="${escapeHtml(l.name)}" /></div>
+      <div class="field"><label>Phone</label><input id="f_phone" value="${escapeHtml(l.phone||'')}" /></div>
+      <div class="field"><label>Address</label><textarea id="f_address">${escapeHtml(l.address||'')}</textarea></div>
+      <div class="field"><label>Opening Balance</label><input id="f_opening" type="number" step="0.01" value="${l.opening_balance||0}" /></div>
+      <div class="field"><label>Notes</label><textarea id="f_notes">${escapeHtml(l.notes||'')}</textarea></div>
+    `, [
+      { label: 'Cancel', class: 'btn-secondary', onClick: closeModal },
+      { label: isEdit ? 'Update' : 'Create', onClick: async () => {
+        const opening = Number($('f_opening').value) || 0;
+        const payload = {
+          company_id: currentCompanyId,
+          name: $('f_name').value.trim(),
+          phone: $('f_phone').value.trim(),
+          address: $('f_address').value.trim(),
+          opening_balance: opening,
+          notes: $('f_notes').value.trim(),
+          created_by: currentUser.id
+        };
+        if (!payload.name) return toast('Name required', 'error');
+        if (isEdit) {
+          // recompute current balance
+          const cb = await computeLedgerBalance(id, opening);
+          payload.current_balance = cb;
+          await sb.from('ledgers').update(payload).eq('id', id);
+        } else {
+          payload.current_balance = opening;
+          payload.created_at = new Date().toISOString();
+          await sb.from('ledgers').insert(payload);
+          await logActivity('Ledger Created', payload.name);
+        }
+        closeModal(); renderCompanyDetail(); toast('Saved', 'success');
+      }}
+    ]);
+  };
+  load();
+}
+
+async function computeLedgerBalance(id, opening) {
+  const { data } = await sb.from('transactions').select('amount,type').eq('ledger_id', id);
+  let bal = Number(opening) || 0;
+  (data || []).forEach(t => {
+    const a = Number(t.amount);
+    if (t.type === 'income' || t.type === 'receive') bal += a;
+    else bal -= a;
+  });
+  return bal;
+}
+
+function openLedgerMenu(id) {
+  openModal('Ledger Options', `
+    <button class="btn" style="margin-bottom:10px;" onclick="closeModal();openLedger('${id}')">👁️ View</button>
+    <button class="btn btn-secondary" style="margin-bottom:10px;" onclick="closeModal();openLedgerForm('${id}')">✏️ Edit</button>
+    <button class="btn btn-danger" onclick="deleteLedger('${id}')">🗑️ Delete</button>
+  `, [{ label: 'Close', class: 'btn-secondary', onClick: closeModal }]);
+}
+
+async function deleteLedger(id) {
+  if (!confirm('Delete this ledger and its transactions?')) return;
+  await sb.from('transactions').delete().eq('ledger_id', id);
+  await sb.from('ledgers').delete().eq('id', id);
+  closeModal(); renderCompanyDetail(); toast('Deleted', 'success');
+}
+
+async function openLedger(id) {
+  currentLedgerId = id;
+  openView('ledgerDetail');
+}
+
+async function renderLedgerDetail() {
+  const { data: l } = await sb.from('ledgers').select('*,companies(name)').eq('id', currentLedgerId).single();
+  if (!l) return;
+  $('ldBreadcrumb').innerHTML = `<a onclick="openView('companies')">Companies</a> <span>›</span> <a onclick="openCompany('${l.company_id}')">${escapeHtml(l.companies?.name||'')}</a> <span>›</span> <span>${escapeHtml(l.name)}</span>`;
+  $('ldInfo').innerHTML = `
+    <p class="card-title">${escapeHtml(l.name)}</p>
+    <p class="list-sub">📞 ${escapeHtml(l.phone||'-')} • 📍 ${escapeHtml(l.address||'-')}</p>
+    <div style="display:flex; gap:10px; margin-top:10px;">
+      <div style="flex:1; background:var(--surface-2); padding:10px; border-radius:10px;">
+        <div style="font-size:11px; color:var(--text-muted);">Opening</div>
+        <div style="font-weight:700;">${fmt(l.opening_balance)}</div>
+      </div>
+      <div style="flex:1; background:var(--surface-2); padding:10px; border-radius:10px;">
+        <div style="font-size:11px; color:var(--text-muted);">Current</div>
+        <div style="font-weight:700; color:var(--primary);">${fmt(l.current_balance)}</div>
+      </div>
+    </div>
+    ${l.notes ? `<p class="list-sub" style="margin-top:8px;">📝 ${escapeHtml(l.notes)}</p>` : ''}
+  `;
+  const { data: tx } = await sb.from('transactions').select('*,companies(name),sites(name)').eq('ledger_id', currentLedgerId).order('date', { ascending: false });
+  $('ldTransactions').innerHTML = (tx && tx.length) ? tx.map(txCard).join('') : emptyHtml('No transactions', '💸');
+}
+
+/* ============================================================
+   TRANSACTIONS
+   ============================================================ */
+async function renderTransactions() {
+  const q = ($('searchTx')?.value || '').toLowerCase();
+  const { data } = await sb.from('transactions').select('*,companies(name),sites(name),ledgers(name)').order('date', { ascending: false }).limit(100);
+  const list = (data || []).filter(t => {
+    if (!q) return true;
+    return (t.description||'').toLowerCase().includes(q) ||
+           (t.ledgers?.name||'').toLowerCase().includes(q) ||
+           (t.sites?.name||'').toLowerCase().includes(q) ||
+           (t.companies?.name||'').toLowerCase().includes(q) ||
+           t.type.includes(q);
+  });
+  $('transactionsList').innerHTML = list.length ? list.map(txCard).join('') : emptyHtml('No transactions', '💸');
+}
+
+function openTransactionForm(id=null) {
+  const isEdit = !!id;
+  const load = async () => {
+    let t = { date: today(), company_id:'', site_id:'', ledger_id:'', amount:0, type:'expense', description:'', remarks:'' };
+    if (isEdit) {
+      const { data } = await sb.from('transactions').select('*').eq('id', id).single();
+      if (data) t = data;
+    }
+    const { data: cos } = await sb.from('companies').select('id,name').order('name');
+    const { data: sis } = await sb.from('sites').select('id,name,company_id').order('name');
+    const { data: les } = await sb.from('ledgers').select('id,name,company_id').order('name');
+
+    const coOpts = (cos||[]).map(c => `<option value="${c.id}" ${c.id===t.company_id?'selected':''}>${escapeHtml(c.name)}</option>`).join('');
+
+    openModal(isEdit ? 'Edit Transaction' : 'New Transaction', `
+      <div class="field"><label>Date</label><input id="f_date" type="date" value="${t.date}" /></div>
+      <div class="field"><label>Type</label>
+        <select id="f_type">
+          ${['income','expense','advance','receive','payment'].map(tp => `<option value="${tp}" ${tp===t.type?'selected':''}>${tp.toUpperCase()}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Company</label>
+        <select id="f_company" onchange="updateTxSelects()">
+          <option value="">-- Select --</option>${coOpts}
+        </select>
+      </div>
+      <div class="field"><label>Site</label>
+        <select id="f_site"><option value="">-- None --</option></select>
+      </div>
+      <div class="field"><label>Ledger (Person)</label>
+        <select id="f_ledger"><option value="">-- None --</option></select>
+      </div>
+      <div class="field"><label>Amount</label><input id="f_amount" type="number" step="0.01" value="${t.amount}" /></div>
+      <div class="field"><label>Description</label><input id="f_desc" value="${escapeHtml(t.description||'')}" /></div>
+      <div class="field"><label>Remarks</label><textarea id="f_remarks">${escapeHtml(t.remarks||'')}</textarea></div>
+    `, [
+      { label: 'Cancel', class: 'btn-secondary', onClick: closeModal },
+      { label: isEdit ? 'Update' : 'Save', onClick: async () => {
+        const payload = {
+          date: $('f_date').value,
+          type: $('f_type').value,
+          company_id: $('f_company').value || null,
+          site_id: $('f_site').value || null,
+          ledger_id: $('f_ledger').value || null,
+          amount: Number($('f_amount').value) || 0,
+          description: $('f_desc').value.trim(),
+          remarks: $('f_remarks').value.trim(),
+          created_by: currentUser.id
+        };
+        if (!payload.amount) return toast('Amount required', 'error');
+        const oldLedger = isEdit ? (await sb.from('transactions').select('ledger_id,amount,type').eq('id', id).single()).data : null;
+        if (isEdit) {
+          payload.updated_at = new Date().toISOString();
+          await sb.from('transactions').update(payload).eq('id', id);
+          if (oldLedger?.ledger_id) await refreshLedgerBalance(oldLedger.ledger_id);
+          if (payload.ledger_id && payload.ledger_id !== oldLedger?.ledger_id) await refreshLedgerBalance(payload.ledger_id);
+          await logActivity('Transaction Edited', `${payload.type} ${fmt(payload.amount)}`);
+        } else {
+          payload.created_at = new Date().toISOString();
+          const { data: ins } = await sb.from('transactions').insert(payload).select().single();
+          if (payload.ledger_id) await refreshLedgerBalance(payload.ledger_id);
+          await logActivity('Transaction Added', `${payload.type} ${fmt(payload.amount)}`);
+        }
+        closeModal();
+        if (currentView === 'ledgerDetail') renderLedgerDetail();
+        else if (currentView === 'companyDetail') renderCompanyDetail();
+        else if (currentView === 'transactions') renderTransactions();
+        else renderDashboard();
+        toast('Saved', 'success');
+      }}
+    ]);
+
+    window._txSites = sis || [];
+    window._txLeds = les || [];
+    updateTxSelects(t.site_id, t.ledger_id);
+  };
+  load();
+}
+
+function updateTxSelects(preSite=null, preLedger=null) {
+  const cid = $('f_company').value;
+  const sites = (window._txSites || []).filter(s => !cid || s.company_id === cid);
+  const leds = (window._txLeds || []).filter(l => !cid || l.company_id === cid);
+  $('f_site').innerHTML = '<option value="">-- None --</option>' + sites.map(s => `<option value="${s.id}" ${s.id===preSite?'selected':''}>${escapeHtml(s.name)}</option>`).join('');
+  $('f_ledger').innerHTML = '<option value="">-- None --</option>' + leds.map(l => `<option value="${l.id}" ${l.id===preLedger?'selected':''}>${escapeHtml(l.name)}</option>`).join('');
+}
+
+async function refreshLedgerBalance(ledgerId) {
+  const { data: l } = await sb.from('ledgers').select('opening_balance').eq('id', ledgerId).single();
+  if (!l) return;
+  const cb = await computeLedgerBalance(ledgerId, l.opening_balance);
+  await sb.from('ledgers').update({ current_balance: cb }).eq('id', ledgerId);
+}
+
+async function openTransactionDetail(id) {
+  const { data: t } = await sb.from('transactions').select('*,companies(name),sites(name),ledgers(name)').eq('id', id).single();
+  if (!t) return;
+  openModal('Transaction', `
+    <div style="background:var(--surface-2); padding:12px; border-radius:12px; margin-bottom:12px;">
+      <div style="font-size:12px; color:var(--text-muted);">Amount</div>
+      <div style="font-size:24px; font-weight:700; color:${(t.type==='income'||t.type==='receive')?'var(--success)':'var(--danger)'};">
+        ${(t.type==='income'||t.type==='receive')?'+':'-'}${fmt(t.amount)}
+      </div>
+    </div>
+    <p><strong>Type:</strong> ${t.type.toUpperCase()}</p>
+    <p><strong>Date:</strong> ${t.date}</p>
+    ${t.companies?.name ? `<p><strong>Company:</strong> ${escapeHtml(t.companies.name)}</p>` : ''}
+    ${t.sites?.name ? `<p><strong>Site:</strong> ${escapeHtml(t.sites.name)}</p>` : ''}
+    ${t.ledgers?.name ? `<p><strong>Ledger:</strong> ${escapeHtml(t.ledgers.name)}</p>` : ''}
+    ${t.description ? `<p><strong>Description:</strong> ${escapeHtml(t.description)}</p>` : ''}
+    ${t.remarks ? `<p><strong>Remarks:</strong> ${escapeHtml(t.remarks)}</p>` : ''}
+  `, [
+    { label: 'Close', class: 'btn-secondary', onClick: closeModal },
+    { label: 'Edit', onClick: () => { closeModal(); openTransactionForm(id); } },
+    { label: 'Delete', class: 'btn-danger', onClick: async () => {
+      if (!confirm('Delete this transaction?')) return;
+      const lid = t.ledger_id;
+      await sb.from('transactions').delete().eq('id', id);
+      if (lid) await refreshLedgerBalance(lid);
+      await logActivity('Transaction Deleted', id);
+      closeModal();
+      if (currentView === 'ledgerDetail') renderLedgerDetail();
+      else if (currentView === 'transactions') renderTransactions();
+      else renderDashboard();
+      toast('Deleted', 'success');
+    }}
+  ]);
+}
+
+/* ============================================================
+   REMINDERS
+   ============================================================ */
+async function renderReminders() {
+  const { data } = await sb.from('reminders').select('*').order('date', { ascending: true });
+  const pending = (data || []).filter(r => r.status === 'pending');
+  const done = (data || []).filter(r => r.status === 'completed');
+  $('remindersList').innerHTML =
+    (pending.length ? `<div class="section-title">Pending</div>` + pending.map(reminderCard).join('') : '') +
+    (done.length ? `<div class="section-title">Completed</div>` + done.map(r => `
+      <div class="list-item" style="opacity:.7;" onclick="openReminderForm('${r.id}')">
+        <div class="list-avatar" style="background:linear-gradient(135deg,#10b981,#34d399);">✓</div>
+        <div class="list-body">
+          <p class="list-title" style="text-decoration:line-through;">${escapeHtml(r.title)}</p>
+          <p class="list-sub">${r.date} ${r.time || ''}</p>
+        </div>
+        <span class="badge badge-success">done</span>
+      </div>`).join('') : '') +
+    (!pending.length && !done.length ? emptyHtml('No reminders', '🔔') : '');
+}
+
+function openReminderForm(id=null) {
+  const isEdit = !!id;
+  const load = async () => {
+    let r = { title:'', date: today(), time:'', notes:'', status:'pending' };
+    if (isEdit) {
+      const { data } = await sb.from('reminders').select('*').eq('id', id).single();
+      if (data) r = data;
+    }
+    openModal(isEdit ? 'Edit Reminder' : 'New Reminder', `
+      <div class="field"><label>Title</label><input id="f_title" value="${escapeHtml(r.title)}" /></div>
+      <div class="field"><label>Date</label><input id="f_date" type="date" value="${r.date}" /></div>
+      <div class="field"><label>Time</label><input id="f_time" type="time" value="${r.time||''}" /></div>
+      <div class="field"><label>Notes</label><textarea id="f_notes">${escapeHtml(r.notes||'')}</textarea></div>
+      <div class="field"><label>Status</label>
+        <select id="f_status">
+          <option value="pending" ${r.status==='pending'?'selected':''}>Pending</option>
+          <option value="completed" ${r.status==='completed'?'selected':''}>Completed</option>
+        </select>
+      </div>
+    `, [
+      { label: 'Cancel', class: 'btn-secondary', onClick: closeModal },
+      { label: isEdit ? 'Update' : 'Create', onClick: async () => {
+        const payload = {
+          title: $('f_title').value.trim(),
+          date: $('f_date').value,
+          time: $('f_time').value,
+          notes: $('f_notes').value.trim(),
+          status: $('f_status').value,
+          user_id: currentUser.id
+        };
+        if (!payload.title) return toast('Title required', 'error');
+        if (isEdit) await sb.from('reminders').update(payload).eq('id', id);
+        else {
+          payload.created_at = new Date().toISOString();
+          await sb.from('reminders').insert(payload);
+          await logActivity('Reminder Created', payload.title);
+        }
+        closeModal(); renderReminders(); toast('Saved', 'success');
+      }}
+    ]);
+  };
+  load();
+}
+
+/* ============================================================
+   CHAT (Realtime)
+   ============================================================ */
+function subscribeChat() {
+  if (chatChannel) sb.removeChannel(chatChannel);
+  chatChannel = sb.channel('chat')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => {
+      appendChatMessage(payload.new);
+    })
+    .subscribe();
+}
+
+async function renderChat() {
+  const { data } = await sb.from('chat_messages').select('*').order('created_at', { ascending: true }).limit(100);
+  $('chatMessages').innerHTML = '';
+  (data || []).forEach(appendChatMessage);
+  scrollChatBottom();
+}
+
+function appendChatMessage(m) {
+  const isMe = m.sender_id === currentUser.id;
+  const time = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + (isMe ? 'me' : 'other');
+  div.innerHTML = `
+    ${!isMe ? `<div class="chat-meta">${escapeHtml(m.sender_name)}</div>` : ''}
+    <div class="chat-bubble">${escapeHtml(m.message)}</div>
+    <div class="chat-meta">${time}</div>
+  `;
+  $('chatMessages').appendChild(div);
+}
+
+function scrollChatBottom() {
+  setTimeout(() => {
+    const el = $('chatMessages');
+    if (el) el.scrollTop = el.scrollHeight;
+  }, 100);
+}
+
+async function sendChat() {
+  const input = $('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  const payload = {
+    sender_id: currentUser.id,
+    sender_name: currentProfile.name || currentUser.email,
+    message: msg,
+    created_at: new Date().toISOString()
+  };
+  await sb.from('chat_messages').insert(payload);
+  await logActivity('Chat Message', msg.slice(0, 40));
+  scrollChatBottom();
+}
+
+/* ============================================================
+   ACTIVITY LOG
+   ============================================================ */
+async function renderActivity() {
+  const { data } = await sb.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(200);
+  $('activityList').innerHTML = (data && data.length) ? data.map(activityCard).join('') : emptyHtml('No activities', '📋');
+}
+
+/* ============================================================
+   STAFF (Admin)
+   ============================================================ */
+async function renderStaff() {
+  if (currentProfile.role !== 'admin') {
+    $('staffList').innerHTML = emptyHtml('Admin only', '🔒');
+    return;
+  }
+  const { data } = await sb.from('profiles').select('*').order('created_at', { ascending: false });
+  $('staffList').innerHTML = (data || []).map(p => `
+    <div class="list-item">
+      <div class="list-avatar">${initials(p.name)}</div>
+      <div class="list-body">
+        <p class="list-title">${escapeHtml(p.name)}</p>
+        <p class="list-sub">${escapeHtml(p.email)} • ${escapeHtml(p.phone||'-')}</p>
+      </div>
+      <span class="badge ${p.role==='admin'?'badge-info':'badge-success'}">${p.role}</span>
+      ${p.id !== currentUser.id ? `<button class="icon-btn" onclick="openStaffMenu('${p.id}')">⋮</button>` : ''}
+    </div>`).join('') || emptyHtml('No staff', '👥');
+}
+
+function openStaffForm(id=null) {
+  const isEdit = !!id;
+  const load = async () => {
+    let p = { name:'', email:'', phone:'', role:'staff' };
+    if (isEdit) {
+      const { data } = await sb.from('profiles').select('*').eq('id', id).single();
+      if (data) p = data;
+    }
+    openModal(isEdit ? 'Edit Staff' : 'New Staff', `
+      ${!isEdit ? `<div class="field"><label>Email</label><input id="f_email" type="email" value="${escapeHtml(p.email)}" /></div>
+      <div class="field"><label>Password</label><input id="f_password" type="password" placeholder="Min 6 chars" /></div>` : ''}
+      <div class="field"><label>Full Name</label><input id="f_name" value="${escapeHtml(p.name)}" /></div>
+      <div class="field"><label>Phone</label><input id="f_phone" value="${escapeHtml(p.phone||'')}" /></div>
+      <div class="field"><label>Role</label>
+        <select id="f_role">
+          <option value="staff" ${p.role==='staff'?'selected':''}>Staff</option>
+          <option value="admin" ${p.role==='admin'?'selected':''}>Admin</option>
+        </select>
+      </div>
+    `, [
+      { label: 'Cancel', class: 'btn-secondary', onClick: closeModal },
+      { label: isEdit ? 'Update' : 'Create', onClick: async () => {
+        if (isEdit) {
+          await sb.from('profiles').update({
+            name: $('f_name').value.trim(),
+            phone: $('f_phone').value.trim(),
+            role: $('f_role').value
+          }).eq('id', id);
+          toast('Updated', 'success');
+        } else {
+          const email = $('f_email').value.trim();
+          const password = $('f_password').value;
+          if (!email || !password) return toast('Email & password required', 'error');
+          const { data: auth, error } = await sb.auth.admin.createUser({
+            email, password, email_confirm: true
+          });
+          if (error) return toast(error.message, 'error');
+          await sb.from('profiles').insert({
+            id: auth.user.id,
+            name: $('f_name').value.trim(),
+            email, phone: $('f_phone').value.trim(),
+            role: $('f_role').value,
+            created_at: new Date().toISOString()
+          });
+          await logActivity('Staff Created', email);
+          toast('Staff created', 'success');
+        }
+        closeModal(); renderStaff();
+      }}
+    ]);
+  };
+  load();
+}
+
+function openStaffMenu(id) {
+  openModal('Staff Options', `
+    <button class="btn" style="margin-bottom:10px;" onclick="closeModal();openStaffForm('${id}')">✏️ Edit</button>
+    <button class="btn btn-danger" onclick="deleteStaff('${id}')">🗑️ Delete</button>
+  `, [{ label: 'Close', class: 'btn-secondary', onClick: closeModal }]);
+}
+
+async function deleteStaff(id) {
+  if (!confirm('Delete this staff member?')) return;
+  await sb.from('profiles').delete().eq('id', id);
+  closeModal(); renderStaff(); toast('Deleted', 'success');
+}
+
+/* ============================================================
+   SEARCH
+   ============================================================ */
+async function doGlobalSearch() {
+  const q = $('globalSearch').value.trim().toLowerCase();
+  if (!q) { $('searchResults').innerHTML = ''; return; }
+  const [cos, sis, les, txs, ps] = await Promise.all([
+    sb.from('companies').select('id,name').ilike('name', `%${q}%`).limit(10),
+    sb.from('sites').select('id,name,company_id').ilike('name', `%${q}%`).limit(10),
+    sb.from('ledgers').select('id,name,company_id').ilike('name', `%${q}%`).limit(10),
+    sb.from('transactions').select('id,description,type,amount,date').ilike('description', `%${q}%`).limit(10),
+    sb.from('profiles').select('id,name,email').ilike('name', `%${q}%`).limit(10)
+  ]);
+  let html = '';
+  if (cos.data?.length) html += `<div class="section-title">Companies</div>` + cos.data.map(c => `
+    <div class="list-item" onclick="openCompany('${c.id}')"><div class="list-avatar">${initials(c.name)}</div><div class="list-body"><p class="list-title">${escapeHtml(c.name)}</p></div></div>`).join('');
+  if (sis.data?.length) html += `<div class="section-title">Sites</div>` + sis.data.map(s => `
+    <div class="list-item" onclick="openCompany('${s.company_id}')"><div class="list-avatar" style="background:linear-gradient(135deg,#10b981,#34d399);">📍</div><div class="list-body"><p class="list-title">${escapeHtml(s.name)}</p></div></div>`).join('');
+  if (les.data?.length) html += `<div class="section-title">Ledgers</div>` + les.data.map(l => `
+    <div class="list-item" onclick="openLedger('${l.id}')"><div class="list-avatar" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);">📒</div><div class="list-body"><p class="list-title">${escapeHtml(l.name)}</p></div></div>`).join('');
+  if (txs.data?.length) html += `<div class="section-title">Transactions</div>` + txs.data.map(t => `
+    <div class="list-item" onclick="openTransactionDetail('${t.id}')"><div class="list-avatar">💰</div><div class="list-body"><p class="list-title">${escapeHtml(t.description||t.type)}</p><p class="list-sub">${t.date}</p></div><div class="list-amount">${fmt(t.amount)}</div></div>`).join('');
+  if (ps.data?.length) html += `<div class="section-title">People</div>` + ps.data.map(p => `
+    <div class="list-item"><div class="list-avatar">${initials(p.name)}</div><div class="list-body"><p class="list-title">${escapeHtml(p.name)}</p><p class="list-sub">${escapeHtml(p.email)}</p></div></div>`).join('');
+  $('searchResults').innerHTML = html || emptyHtml('No results', '🔍');
+}
+
+/* ============================================================
+   AUTO-REFRESH CHAT & SESSION
+   ============================================================ */
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session?.user && !currentUser) {
+    afterLogin(session.user);
+  } else if (event === 'SIGNED_OUT') {
+    currentUser = null;
+    $('app').style.display = 'none';
+    $('loginScreen').style.display = 'flex';
+  }
+});
+
+// Override openView for chat to load messages
+const _origOpenView = openView;
+// (already handled via refreshView)
+
+// Watch for view change to chat
+const origRefresh = refreshView;
+refreshView = function(v) {
+  origRefresh(v);
+  if (v === 'chat') renderChat();
+};
+
+// Settings link from dashboard (long press header)
+$('pageTitle').addEventListener('click', () => {
+  openView('settings');
+});
+
+// Admin shortcuts: long-press on settings
+// Add admin menu items inside settings view
+const settingsView = $('view-settings');
+const adminMenu = document.createElement('div');
+adminMenu.innerHTML = `
+  <div class="card" id="adminMenuCard" style="display:none;">
+    <p class="card-title">Admin Tools</p>
+    <button class="btn btn-secondary" style="margin-bottom:8px;" onclick="openView('staff')">👥 Manage Staff</button>
+    <button class="btn btn-secondary" onclick="openView('activity')">📋 Activity Log</button>
+  </div>
+`;
+settingsView.insertBefore(adminMenu.firstElementChild, settingsView.children[2]);
+
+// Show admin menu if admin
+const _origInit = initApp;
+initApp = async function() {
+  await _origInit();
+  if (currentProfile.role === 'admin') {
+    $('adminMenuCard').style.display = 'block';
+  }
+};
+
+// Initial session check
+(async () => {
+  const { data } = await sb.auth.getSession();
+  if (data.session?.user) {
+    await afterLogin(data.session.user);
+  }
+})();
+</script>
+</body>
+</html>
